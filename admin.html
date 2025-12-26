@@ -42,7 +42,10 @@
                 <p class="text-gray-500">Connected: sarita's_library</p>
             </div>
             <div class="flex gap-2">
-                <button onclick="location.reload()" class="px-4 py-2 bg-white border rounded-lg text-sm font-semibold hover:bg-gray-50">Refresh Data</button>
+                <a href="index.html" class="px-5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center gap-2 shadow-sm">
+                    <i data-lucide="home" class="w-4 h-4 text-blue-600"></i>
+                    Go to Home Page
+                </a>
             </div>
         </header>
 
@@ -170,7 +173,6 @@
         
         let supabaseClient;
         
-        // PIN Logic
         function checkPin() {
             const enteredPin = document.getElementById('admin-pin').value;
             if(enteredPin === "sarita's_library") {
@@ -262,7 +264,7 @@
             const { data, error } = await supabaseClient
                 .from('reader_of_the_month')
                 .select('*')
-                .eq('id', 'current') // MATCHES NEW SQL SCHEMA
+                .eq('id', 'current')
                 .maybeSingle();
 
             if (data) {
@@ -311,7 +313,6 @@
         document.getElementById('reader-form').onsubmit = async (e) => {
             e.preventDefault();
             const btn = document.getElementById('r-submit');
-            const icon = document.getElementById('r-icon');
             btn.disabled = true; 
             btn.innerHTML = 'Updating...';
 
@@ -320,7 +321,6 @@
                 const file = document.getElementById('r-file').files[0];
                 if (file) url = await uploadImage(file);
 
-                // FIXED: Use 'current' (string) to match your new SQL table
                 const { error } = await supabaseClient
                     .from('reader_of_the_month')
                     .upsert({
@@ -333,7 +333,7 @@
                     }, { onConflict: 'id' });
 
                 if (error) throw error;
-                alert("Reader of the Month replaced successfully!");
+                alert("Reader of the Month updated successfully!");
             } catch(err) {
                 alert("Error: " + err.message);
             } finally {
@@ -351,7 +351,6 @@
             }
         }
 
-        // Initialize Lucide for the Auth Screen
         window.onload = () => lucide.createIcons();
     </script>
 </body>
