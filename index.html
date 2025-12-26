@@ -4,30 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Senior Library (VI-XII) - Gyanshree School</title>
-    <!-- External Scripts: Tailwind for styling and Lucide for vector icons -->
+    <!-- External Scripts: Tailwind for styling, Lucide for icons, and Supabase for data -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
-        /* Typography: Importing the 'Inter' font family from Google Fonts */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        
         body { font-family: 'Inter', sans-serif; }
-
-        /* Carousel Transition: Smooth 1-second fade effect between images */
         .slide { transition: opacity 1s ease-in-out; }
 
-        /* Animation: Creating a pulsing circular effect for the 'Events' tile */
         @keyframes pulse-ring {
             0% { transform: scale(0.9); opacity: 1; }
             50% { opacity: 0.5; }
             100% { transform: scale(1.5); opacity: 0; }
         }
-        .pulse-effect {
-            animation: pulse-ring 1.5s infinite;
-        }
+        .pulse-effect { animation: pulse-ring 1.5s infinite; }
 
-        /* UI Decoration: A diagonal red banner used for 'Under Construction' items */
         .construction-ribbon {
             position: absolute;
             top: 10px;
@@ -41,14 +34,18 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
             z-index: 20;
         }
+
+        /* Modal specific styles */
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+        }
     </style>
 </head>
 <body class="bg-gray-100 flex flex-col min-h-screen">
 
-    <!-- Navigation Header: Logo and links -->
     <header class="bg-white shadow-md">
         <nav class="container mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-20">
-            <!-- Branding: Logo and School Name -->
             <div class="flex items-center">
                 <a href="index.html" class="flex items-center">
                     <img src="https://www.gyanshree.in/site/assets/images/gyan-logo.jpg" 
@@ -57,13 +54,11 @@
                     <span class="ml-3 text-2xl font-bold text-gray-800 hidden sm:block">Gyanshree School</span>
                 </a>
             </div>
-            <!-- Navigation Links: Hidden on mobile, shown on md screens and up -->
             <div class="hidden md:flex items-center space-x-6">
                 <a href="index.html" class="text-blue-600 font-semibold transition-colors border-b-2 border-blue-600">HOME</a>
                 <a href="credits.html" class="text-gray-600 hover:text-blue-600 transition-colors">CREDITS</a>
                 <a href="mailto:info@gyanshree.in" class="text-gray-600 hover:text-blue-600 transition-colors">CONTACT</a>
             </div>
-            <!-- Mobile Menu: Hamburger icon for smaller devices -->
             <div class="md:hidden">
                 <i data-lucide="menu" class="w-6 h-6 text-gray-600 cursor-pointer"></i>
             </div>
@@ -71,165 +66,194 @@
     </header>
 
     <main class="flex-grow">
-        <!-- Hero Section: Automatic Image Carousel -->
+        <!-- Hero Carousel -->
         <div id="slider" class="relative w-full h-[300px] sm:h-[400px] lg:h-[550px] overflow-hidden bg-gray-900">
-            <!-- Slides: Absolute positioned images that stack on top of each other -->
             <div class="slide absolute inset-0 w-full h-full opacity-100">
-                <img src="IMG_8939.jpg" alt="Library Circulation Desk" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='https://placehold.co/800x400/38bdf8/ffffff?text=Desk+and+Librarian';">
+                <img src="IMG_8939.jpg" alt="Library Desk" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='https://placehold.co/800x400/38bdf8/ffffff?text=Desk';">
             </div>
             <div class="slide absolute inset-0 w-full h-full opacity-0">
-                <img src="IMG_8940.jpg" alt="Central Library Shelving Area" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='https://placehold.co/800x400/3b82f6/ffffff?text=Central+Shelving';">
+                <img src="IMG_8940.jpg" alt="Library Shelves" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='https://placehold.co/800x400/3b82f6/ffffff?text=Shelving';">
             </div>
-            <div class="slide absolute inset-0 w-full h-full opacity-0">
-                <img src="IMG_8936.jpg" alt="Students using study carrels" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='https://placehold.co/800x400/2563eb/ffffff?text=Students+Working';">
-            </div>
-            <div class="slide absolute inset-0 w-full h-full opacity-0">
-                <img src="IMG_8937.jpg" alt="Library Reading Nook Seating Area" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='https://placehold.co/800x400/1d4ed8/ffffff?text=Reading+Nook';">
-            </div>
-
-            <!-- Carousel UI: Navigation Arrows -->
-            <button id="prevBtn" class="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition z-10">
-                <i data-lucide="chevron-left"></i>
-            </button>
-            <button id="nextBtn" class="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition z-10">
-                <i data-lucide="chevron-right"></i>
-            </button>
-            <!-- Carousel UI: Dots injected by JS representing slide count -->
+            <button id="prevBtn" class="absolute left-4 top-1/2 -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 z-10"><i data-lucide="chevron-left"></i></button>
+            <button id="nextBtn" class="absolute right-4 top-1/2 -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 z-10"><i data-lucide="chevron-right"></i></button>
             <div id="dotsContainer" class="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2 z-10"></div>
         </div>
 
-        <!-- Introduction: Text overview of the library -->
         <section class="py-12 sm:py-20 bg-white">
-            <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-5xl text-center">
+            <div class="container mx-auto px-4 text-center max-w-5xl">
                 <h2 class="text-4xl font-extrabold text-gray-800 mb-6">About the Senior Library</h2>
-                <p class="text-xl sm:text-2xl text-gray-600 mb-6 leading-relaxed">
-                    The Senior Library at Gyanshree School is a state-of-the-art resource center designed to support the academic and intellectual growth of students from grades VI to XII.
-                </p>
-                <p class="text-xl sm:text-2xl text-gray-600 leading-relaxed">
-                    With a vast collection of fiction, non-fiction, reference materials, and digital databases, the library serves as a quiet sanctuary for study and research.
-                </p>
+                <p class="text-xl sm:text-2xl text-gray-600 leading-relaxed">A state-of-the-art resource center designed for academic and intellectual growth.</p>
             </div>
         </section>
 
-        <!-- Features Grid: Tiles linking to different sub-pages -->
+        <!-- Features Grid (Original Layout Maintained) -->
         <section class="bg-gray-200 py-12 sm:py-16">
-            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-                <!-- Grid layout: Responsive columns ranging from 1 to 6 depending on screen width -->
+            <div class="max-w-6xl mx-auto px-4">
                 <div id="resourceGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                    
-                    <!-- Feature 1: The Matchmaking Quiz -->
-                    <a href="quiz.html" target="_blank" class="flex flex-col items-center justify-center text-center p-6 bg-teal-600 text-white rounded-lg shadow-md hover:bg-teal-700 transition-colors h-40">
+                    <a href="quiz.html" class="flex flex-col items-center justify-center text-center p-6 bg-teal-600 text-white rounded-lg shadow-md hover:bg-teal-700 h-40 transition">
                         <i data-lucide="puzzle" class="w-10 h-10 mb-2"></i>
-                        <span class="font-semibold text-xl w-full">Genre Quiz</span>
+                        <span class="font-semibold text-xl">Genre Quiz</span>
                     </a>
-                    
-                    <!-- Feature 2: Book List (Disabled placeholder) -->
                     <div class="relative flex flex-col items-center justify-center text-center p-6 bg-cyan-700/60 text-white rounded-lg shadow-inner h-40 opacity-90 cursor-not-allowed">
                         <i data-lucide="book-open-check" class="w-10 h-10 mb-2"></i>
-                        <span class="font-semibold text-xl w-full">Book List</span>
+                        <span class="font-semibold text-xl">Book List</span>
                         <div class="construction-ribbon">BETA</div>
                     </div>
-                    
-                    <!-- Feature 3: New Arrivals Link -->
-                    <a href="new_arrivals.html" class="flex flex-col items-center justify-center text-center p-6 bg-sky-700 text-white rounded-lg shadow-md hover:bg-sky-800 transition-colors h-40">
+                    <a href="new_arrivals.html" class="flex flex-col items-center justify-center text-center p-6 bg-sky-700 text-white rounded-lg shadow-md hover:bg-sky-800 h-40 transition">
                         <i data-lucide="star" class="w-10 h-10 mb-2"></i>
-                        <span class="font-semibold text-xl w-full">New Arrivals</span>
+                        <span class="font-semibold text-xl">New Arrivals</span>
                     </a>
-                    
-                    <!-- Feature 4: Library Rules Link -->
-                    <a href="library_rules.html" class="flex flex-col items-center justify-center text-center p-6 bg-blue-700 text-white rounded-lg shadow-md hover:bg-blue-800 transition-colors h-40">
+                    <a href="library_rules.html" class="flex flex-col items-center justify-center text-center p-6 bg-blue-700 text-white rounded-lg shadow-md hover:bg-blue-800 h-40 transition">
                         <i data-lucide="clipboard-list" class="w-10 h-10 mb-2"></i>
-                        <span class="font-semibold text-xl w-full">Library Rules</span>
+                        <span class="font-semibold text-xl">Library Rules</span>
                     </a>
-                    
-                    <!-- Feature 5: Events (With animated pulse effect) -->
-                    <a href="events.html" class="relative flex flex-col items-center justify-center text-center p-6 bg-indigo-700 text-white rounded-lg shadow-md hover:bg-indigo-800 transition-colors h-40 overflow-hidden">
+                    <a href="events.html" class="relative flex flex-col items-center justify-center text-center p-6 bg-indigo-700 text-white rounded-lg shadow-md hover:bg-indigo-800 h-40 overflow-hidden transition">
                         <div class="absolute inset-0 flex items-center justify-center">
                             <div class="w-16 h-16 rounded-full bg-white/20 pulse-effect"></div>
                         </div>
                         <i data-lucide="trophy" class="w-10 h-10 mb-2 relative z-10"></i>
-                        <span class="font-semibold text-xl w-full relative z-10">Events</span>
+                        <span class="font-semibold text-xl relative z-10">Events</span>
                     </a>
-                    
-                    <!-- Feature 6: Credits Link -->
-                    <a href="credits.html" class="flex flex-col items-center justify-center text-center p-6 bg-violet-700 text-white rounded-lg shadow-md hover:bg-violet-800 transition-colors h-40">
+                    <a href="credits.html" class="flex flex-col items-center justify-center text-center p-6 bg-violet-700 text-white rounded-lg shadow-md hover:bg-violet-800 h-40 transition">
                         <i data-lucide="help-circle" class="w-10 h-10 mb-2"></i>
-                        <span class="font-semibold text-xl w-full">Credits</span>
+                        <span class="font-semibold text-xl">Credits</span>
                     </a>
-
                 </div>
             </div>
         </section>
     </main>
 
-    <!-- Page Footer -->
+    <!-- READER OF THE MONTH POPUP MODAL -->
+    <div id="reader-modal" class="fixed inset-0 z-[100] modal-overlay flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden relative transform transition-all scale-90 opacity-0 duration-500" id="modal-content">
+            <!-- Close Button -->
+            <button onclick="closeReaderModal()" class="absolute top-4 right-4 text-white/80 hover:text-white transition z-10">
+                <i data-lucide="x-circle" class="w-8 h-8"></i>
+            </button>
+            
+            <!-- Card Header -->
+            <div class="bg-gradient-to-br from-amber-400 to-orange-600 p-8 text-center text-white relative">
+                <div class="absolute top-0 right-0 p-4 opacity-20">
+                    <i data-lucide="award" class="w-24 h-24 rotate-12"></i>
+                </div>
+                <p id="rom-month" class="text-xs font-black uppercase tracking-[0.4em] mb-2 opacity-90">...</p>
+                <h2 class="text-3xl font-bold leading-tight">Reader of <br>the Month</h2>
+            </div>
+            
+            <!-- Card Body -->
+            <div class="p-8 text-center -mt-12">
+                <div class="relative inline-block mb-6">
+                    <div class="w-32 h-32 mx-auto rounded-full border-4 border-white p-1 overflow-hidden shadow-xl bg-gray-50">
+                        <img id="rom-image" src="https://placehold.co/200x200/f59e0b/ffffff?text=..." class="w-full h-full object-cover rounded-full">
+                    </div>
+                    <div class="absolute bottom-0 right-0 bg-amber-500 text-white p-2 rounded-full shadow-lg border-2 border-white">
+                        <i data-lucide="medal" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                
+                <h3 id="rom-name" class="text-2xl font-bold text-gray-800 mb-1 leading-tight">Loading...</h3>
+                <p id="rom-class" class="text-amber-600 font-semibold text-sm">Gyanshree Student</p>
+                
+                <div class="mt-8 pt-6 border-t border-gray-100">
+                    <button onclick="closeReaderModal()" class="w-full bg-gray-900 text-white font-bold py-3 rounded-xl hover:bg-gray-800 transition shadow-lg">Excellent!</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <footer class="bg-gray-800 text-gray-400 py-8 mt-auto">
-        <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div class="container mx-auto px-4 text-center text-sm">
             <p>&copy; 2025 Gyanshree School, Noida. All Rights Reserved.</p>
         </div>
     </footer>
 
     <script>
+        // Supabase Client Configuration
+        const SUPABASE_URL = 'https://oizvyuciltowiospwaob.supabase.co'; 
+        const SUPABASE_ANON_KEY = 'sb_publishable_QeoS6bMi2XcGSEstKng22w_PjySmNUx';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize Lucide Icons for the entire page
             if (typeof lucide !== 'undefined') lucide.createIcons();
             
-            // Selecting elements for the Image Carousel
+            // Carousel Logic
             const slides = document.querySelectorAll('#slider .slide');
             const dotsContainer = document.getElementById('dotsContainer');
-            const nextButton = document.getElementById('nextBtn');
-            const previousButton = document.getElementById('prevBtn');
             let currentSlide = 0;
-            let intervalId;
 
-            // Loop through slides to create navigation dots dynamically
             slides.forEach((_, index) => {
                 const dot = document.createElement('button');
-                dot.classList.add('w-3', 'h-3', 'rounded-full', 'bg-white/50', 'transition');
-                if (index === 0) dot.classList.replace('bg-white/50', 'bg-white'); // Highlight first dot
-                dot.addEventListener('click', () => {
-                    showSlide(index);
-                    resetInterval(); // Stop/Restart auto-timer on user click
-                });
+                dot.className = `w-3 h-3 rounded-full ${index === 0 ? 'bg-white' : 'bg-white/50'}`;
+                dot.onclick = () => showSlide(index);
                 dotsContainer.appendChild(dot);
             });
 
-            const dots = dotsContainer.querySelectorAll('button');
-
-            /**
-             * Updates the visible slide based on the provided index
-             * @param {number} n - The target slide index
-             */
             function showSlide(n) {
-                // Loop back logic
-                if (n >= slides.length) currentSlide = 0;
-                else if (n < 0) currentSlide = slides.length - 1;
-                else currentSlide = n;
-
-                // Hide all slides and dim all dots
-                slides.forEach(slide => slide.style.opacity = '0');
-                dots.forEach(dot => dot.classList.replace('bg-white', 'bg-white/50'));
-
-                // Show current slide and highlight current dot
-                slides[currentSlide].style.opacity = '1';
-                dots[currentSlide].classList.replace('bg-white/50', 'bg-white');
+                currentSlide = (n + slides.length) % slides.length;
+                slides.forEach((s, i) => s.style.opacity = i === currentSlide ? '1' : '0');
+                const dots = dotsContainer.querySelectorAll('button');
+                dots.forEach((d, i) => d.className = `w-3 h-3 rounded-full ${i === currentSlide ? 'bg-white' : 'bg-white/50'}`);
             }
 
-            // Helper functions for directional movement
-            function nextSlide() { showSlide(currentSlide + 1); }
-            function prevSlide() { showSlide(currentSlide - 1); }
+            document.getElementById('nextBtn').onclick = () => showSlide(currentSlide + 1);
+            document.getElementById('prevBtn').onclick = () => showSlide(currentSlide - 1);
+            setInterval(() => showSlide(currentSlide + 1), 5000);
 
-            // Automatic Slidshow Logic: 5-second interval
-            function startInterval() { intervalId = setInterval(nextSlide, 5000); }
-            function resetInterval() { clearInterval(intervalId); startInterval(); }
-
-            // Manual Navigation Listeners
-            nextButton.addEventListener('click', () => { nextSlide(); resetInterval(); });
-            previousButton.addEventListener('click', () => { prevSlide(); resetInterval(); });
-
-            // Start the timer when the page finishes loading
-            startInterval();
+            // Auto-open Reader of the Month popup on load
+            setTimeout(openReaderModal, 1500); 
         });
+
+        async function openReaderModal() {
+            const modal = document.getElementById('reader-modal');
+            const content = document.getElementById('modal-content');
+            
+            // Show overlay first
+            modal.classList.remove('hidden');
+            
+            // Animate card in
+            setTimeout(() => {
+                content.classList.remove('scale-90', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 50);
+
+            try {
+                // Fetch latest reader from 'reader_of_the_month' table
+                const { data, error } = await supabaseClient
+                    .from('reader_of_the_month')
+                    .select('*')
+                    .order('updated_at', { ascending: false })
+                    .limit(1);
+
+                if (data && data[0]) {
+                    const reader = data[0];
+                    document.getElementById('rom-name').innerText = reader.name;
+                    document.getElementById('rom-month').innerText = reader.month_year || 'Current Month';
+                    document.getElementById('rom-class').innerText = reader.class_section || "Senior Student";
+                    if (reader.image_url) {
+                        document.getElementById('rom-image').src = reader.image_url;
+                    }
+                } else {
+                    // Fallback UI if no data
+                    document.getElementById('rom-name').innerText = "Keep Reading!";
+                    document.getElementById('rom-month').innerText = "Coming Soon";
+                    document.getElementById('rom-class').innerText = "Your name could be here!";
+                }
+            } catch (err) {
+                console.error("Supabase Error:", err);
+            }
+        }
+
+        function closeReaderModal() {
+            const modal = document.getElementById('reader-modal');
+            const content = document.getElementById('modal-content');
+            
+            content.classList.add('scale-90', 'opacity-0');
+            content.classList.remove('scale-100', 'opacity-100');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 500);
+        }
     </script>
 </body>
 </html>
