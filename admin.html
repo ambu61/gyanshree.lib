@@ -170,15 +170,16 @@
         
         let supabaseClient;
         
-        // Initialize Supabase only when script is loaded
-        window.onload = () => {
+        // Ensure scripts are loaded before initializing Supabase
+        window.addEventListener('load', () => {
             if (typeof supabase !== 'undefined') {
                 supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                console.log("Supabase initialized.");
             } else {
-                console.error("Supabase script failed to load.");
+                console.error("Supabase script not found.");
             }
             if (typeof lucide !== 'undefined') lucide.createIcons();
-        };
+        });
 
         // PIN Logic
         function checkPin() {
@@ -190,7 +191,6 @@
                     fetchEvents();
                     fetchCurrentReader();
                 }
-                if (typeof lucide !== 'undefined') lucide.createIcons();
             } else { 
                 alert("Incorrect PIN."); 
             }
@@ -270,23 +270,13 @@
                 .from('reader_of_the_month')
                 .select('*')
                 .eq('id', 'current-reader')
-                .single();
+                .maybeSingle();
 
-            let target = data;
-            if (!target) {
-                const { data: latest } = await supabaseClient
-                    .from('reader_of_the_month')
-                    .select('*')
-                    .order('updated_at', { ascending: false })
-                    .limit(1);
-                if (latest && latest[0]) target = latest[0];
-            }
-
-            if (target) {
-                document.getElementById('r-name').value = target.name || '';
-                document.getElementById('r-class').value = target.class_section || '';
-                document.getElementById('r-month').value = target.month_year || '';
-                if (target.image_url) document.getElementById('r-preview').src = target.image_url;
+            if (data) {
+                document.getElementById('r-name').value = data.name || '';
+                document.getElementById('r-class').value = data.class_section || '';
+                document.getElementById('r-month').value = data.month_year || '';
+                if (data.image_url) document.getElementById('r-preview').src = data.image_url;
             }
         }
 
