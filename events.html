@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Events - Gyanshree School</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        .event-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .event-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .date-badge-horizontal {
+            background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+    <!-- Navigation Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-20">
+            <div class="flex items-center">
+                <a href="index.html" class="flex items-center">
+                    <img src="https://www.gyanshree.in/site/assets/images/gyan-logo.jpg" 
+                         onerror="this.onerror=null;this.src='https://placehold.co/48x48/3c82f6/ffffff?text=GS';" 
+                         alt="Logo" class="w-12 h-12 object-contain rounded-lg">
+                    <span class="ml-3 text-xl font-bold text-gray-800 hidden sm:block">Senior Library</span>
+                </a>
+            </div>
+            <div class="flex items-center space-x-6">
+                <a href="index.html" class="text-gray-600 hover:text-indigo-600 font-semibold transition-colors">HOME</a>
+                <a href="new_arrivals.html" class="text-gray-600 hover:text-indigo-600 font-semibold transition-colors">NEW ARRIVALS</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 py-12 max-w-4xl">
+        <!-- Hero Section -->
+        <div class="text-center mb-16">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4 tracking-tight">Library Events</h1>
+            <p class="text-lg text-gray-600 max-w-2xl mx-auto">Stay updated with the latest literary festivals and activities happening at the Gyanshree Senior Library.</p>
+        </div>
+
+        <!-- Events List Container -->
+        <div id="events-grid" class="space-y-12">
+            <!-- Loading State -->
+            <div id="loading-state" class="flex flex-col items-center justify-center py-20">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
+                <p class="text-gray-500">Fetching upcoming events...</p>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="hidden text-center py-20 bg-white rounded-3xl border-2 border-dashed border-gray-200 mt-8">
+            <i data-lucide="calendar-x" class="w-16 h-16 text-gray-300 mx-auto mb-4"></i>
+            <h3 class="text-xl font-bold text-gray-800">No Upcoming Events</h3>
+            <p class="text-gray-500">Check back later for new schedules!</p>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-gray-400 py-8 mt-20">
+        <div class="container mx-auto px-4 text-center">
+            <p>&copy; 2025 Gyanshree School, Noida. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // --- CONFIGURATION ---
+        const SUPABASE_URL = 'https://oizvyuciltowiospwaob.supabase.co'; 
+        const SUPABASE_ANON_KEY = 'sb_publishable_QeoS6bMi2XcGSEstKng22w_PjySmNUx';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function fetchEvents() {
+            const grid = document.getElementById('events-grid');
+            const loader = document.getElementById('loading-state');
+            const emptyState = document.getElementById('empty-state');
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('events')
+                    .select('*')
+                    .order('event_date', { ascending: true });
+
+                loader.classList.add('hidden');
+
+                if (error) throw error;
+
+                if (!data || data.length === 0) {
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+
+                const eventsHtml = data.map(event => {
+                    const eventDate = new Date(event.event_date);
+                    const day = eventDate.getDate();
+                    const month = eventDate.toLocaleString('default', { month: 'short' }).toUpperCase();
+                    const year = eventDate.getFullYear();
+                    
+                    return `
+                        <div class="event-card bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 p-8 md:p-12 flex flex-col items-center text-center">
+                            <h3 class="text-3xl font-bold text-gray-900 mb-6 uppercase tracking-tight">${event.title}</h3>
+                            <div class="w-full max-w-2xl h-64 md:h-96 overflow-hidden rounded-2xl mb-6 bg-gray-100 shadow-inner">
+                                <img src="${event.image_url || 'https://placehold.co/1200x600/6366f1/ffffff?text=Library+Event'}" 
+                                     alt="${event.title}" 
+                                     class="w-full h-full object-cover"
+                                     onerror="this.src='https://placehold.co/1200x600/6366f1/ffffff?text=Library+Event'">
+                            </div>
+                            <div class="date-badge-horizontal text-white px-8 py-2 rounded-full text-lg font-bold mb-6 shadow-md inline-block">
+                                ${day} ${month} ${year}
+                            </div>
+                            <div class="max-w-2xl">
+                                <p class="text-gray-600 text-lg leading-relaxed mb-8">
+                                    ${event.description || 'No additional details provided for this event.'}
+                                </p>
+                            </div>
+                            <div class="flex items-center text-indigo-600 font-bold text-sm uppercase tracking-[0.2em]">
+                                <i data-lucide="clock" class="w-5 h-5 mr-2"></i>
+                                Upcoming Event
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                grid.innerHTML = eventsHtml;
+                lucide.createIcons();
+            } catch (err) {
+                console.error('Error:', err);
+                loader.innerHTML = `<p class="text-red-500 font-semibold">Failed to load events. Please try refreshing.</p>`;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchEvents();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        });
+    </script>
+</body>
+</html>
