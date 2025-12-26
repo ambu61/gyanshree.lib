@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Library Admin - Gyanshree School</title>
+    <!-- External Scripts -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -166,16 +167,29 @@
     <script>
         const SUPABASE_URL = 'https://oizvyuciltowiospwaob.supabase.co'; 
         const SUPABASE_ANON_KEY = 'sb_publishable_QeoS6bMi2XcGSEstKng22w_PjySmNUx';
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        let supabaseClient;
+        
+        // Initialize Supabase only when script is loaded
+        window.onload = () => {
+            if (typeof supabase !== 'undefined') {
+                supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            } else {
+                console.error("Supabase script failed to load.");
+            }
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        };
 
         // PIN Logic
         function checkPin() {
             const enteredPin = document.getElementById('admin-pin').value;
             if(enteredPin === "sarita's_library") {
                 document.getElementById('admin-auth-overlay').classList.add('hidden');
-                fetchBooks(); 
-                fetchEvents();
-                fetchCurrentReader();
+                if (supabaseClient) {
+                    fetchBooks(); 
+                    fetchEvents();
+                    fetchCurrentReader();
+                }
                 if (typeof lucide !== 'undefined') lucide.createIcons();
             } else { 
                 alert("Incorrect PIN."); 
@@ -189,9 +203,8 @@
             document.getElementById('btn-' + tabId.split('-')[0]).classList.add('active');
         }
 
-        // Image Handling
         async function uploadImage(file) {
-            if (!file) return null;
+            if (!file || !supabaseClient) return null;
             const fileName = `${Date.now()}-${file.name.replace(/\s/g, '_')}`;
             const { data, error } = await supabaseClient.storage
                 .from('library-images')
@@ -208,8 +221,8 @@
             }
         }
 
-        // FETCH DATA
         async function fetchBooks() {
+            if (!supabaseClient) return;
             const listElement = document.getElementById('books-list');
             const countElement = document.getElementById('book-count');
             const { data, error } = await supabaseClient.from('books').select('*').order('created_at', {ascending: false});
@@ -233,6 +246,7 @@
         }
 
         async function fetchEvents() {
+            if (!supabaseClient) return;
             const listElement = document.getElementById('events-list');
             const countElement = document.getElementById('event-count');
             const { data, error } = await supabaseClient.from('events').select('*').order('event_date', {ascending: true});
@@ -251,19 +265,34 @@
         }
 
         async function fetchCurrentReader() {
-            const { data, error } = await supabaseClient.from('reader_of_the_month').select('*').order('updated_at', {ascending: false}).limit(1);
-            if (data && data[0]) {
-                const r = data[0];
-                document.getElementById('r-name').value = r.name;
-                document.getElementById('r-class').value = r.class_section;
-                document.getElementById('r-month').value = r.month_year;
-                if (r.image_url) document.getElementById('r-preview').src = r.image_url;
+            if (!supabaseClient) return;
+            const { data, error } = await supabaseClient
+                .from('reader_of_the_month')
+                .select('*')
+                .eq('id', 'current-reader')
+                .single();
+
+            let target = data;
+            if (!target) {
+                const { data: latest } = await supabaseClient
+                    .from('reader_of_the_month')
+                    .select('*')
+                    .order('updated_at', { ascending: false })
+                    .limit(1);
+                if (latest && latest[0]) target = latest[0];
+            }
+
+            if (target) {
+                document.getElementById('r-name').value = target.name || '';
+                document.getElementById('r-class').value = target.class_section || '';
+                document.getElementById('r-month').value = target.month_year || '';
+                if (target.image_url) document.getElementById('r-preview').src = target.image_url;
             }
         }
 
-        // SUBMIT HANDLERS
         document.getElementById('book-form').onsubmit = async (e) => {
             e.preventDefault();
+            if (!supabaseClient) return;
             const btn = document.getElementById('b-submit');
             btn.disabled = true; btn.innerText = 'Processing...';
             try {
@@ -282,6 +311,7 @@
 
         document.getElementById('event-form').onsubmit = async (e) => {
             e.preventDefault();
+            if (!supabaseClient) return;
             const btn = document.getElementById('e-submit');
             btn.disabled = true; btn.innerText = 'Processing...';
             try {
@@ -299,8 +329,10 @@
 
         document.getElementById('reader-form').onsubmit = async (e) => {
             e.preventDefault();
+            if (!supabaseClient) return;
             const btn = document.getElementById('r-submit');
-            btn.disabled = true; btn.innerHTML = '<i data-lucide="refresh-cw" class="w-5 h-5 animate-spin"></i> Updating...';
+            btn.disabled = true; 
+            btn.innerHTML = '<i data-lucide="refresh-cw" class="w-5 h-5 animate-spin"></i> Updating...';
             lucide.createIcons();
 
             try {
@@ -308,15 +340,18 @@
                 const file = document.getElementById('r-file').files[0];
                 if (file) url = await uploadImage(file);
 
-                // We insert a new record so we have history, or update. 
-                // For simplicity, we'll insert a new one and the main page always takes the newest.
-                await supabaseClient.from('reader_of_the_month').insert([{
-                    name: document.getElementById('r-name').value,
-                    class_section: document.getElementById('r-class').value,
-                    month_year: document.getElementById('r-month').value,
-                    image_url: url
-                }]);
+                const { error } = await supabaseClient
+                    .from('reader_of_the_month')
+                    .upsert({
+                        id: 'current-reader',
+                        name: document.getElementById('r-name').value,
+                        class_section: document.getElementById('r-class').value,
+                        month_year: document.getElementById('r-month').value,
+                        image_url: url,
+                        updated_at: new Date()
+                    }, { onConflict: 'id' });
 
+                if (error) throw error;
                 alert("Reader of the Month updated successfully!");
             } catch(err) {
                 alert("Update failed: " + err.message);
@@ -328,15 +363,12 @@
         };
 
         window.deleteItem = async (table, id, title) => {
+            if(!supabaseClient) return;
             if(confirm(`Remove "${title}"?`)) {
                 await supabaseClient.from(table).delete().eq('id', id);
                 table === 'books' ? await fetchBooks() : await fetchEvents();
             }
         }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-        });
     </script>
 </body>
 </html>
