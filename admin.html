@@ -42,7 +42,7 @@
                 <p class="text-gray-500">Connected: sarita's_library</p>
             </div>
             <div class="flex gap-2">
-                <a href="index.html" class="px-4 py-2 bg-white border rounded-lg text-sm font-semibold hover:bg-gray-50">View Live Site</a>
+                <button onclick="location.reload()" class="px-4 py-2 bg-white border rounded-lg text-sm font-semibold hover:bg-gray-50">Refresh Data</button>
             </div>
         </header>
 
@@ -157,7 +157,7 @@
                     </div>
 
                     <button type="submit" id="r-submit" class="w-full bg-orange-500 text-white py-4 rounded-xl font-bold hover:bg-orange-600 transition shadow-lg shadow-orange-100 flex items-center justify-center">
-                        <i data-lucide="save" class="w-5 h-5 mr-2"></i> Update Reader
+                        <i data-lucide="save" class="w-5 h-5 mr-2" id="r-icon"></i> Update Reader
                     </button>
                 </form>
             </section>
@@ -170,30 +170,25 @@
         
         let supabaseClient;
         
-        // Ensure scripts are loaded before initializing Supabase
-        window.addEventListener('load', () => {
-            if (typeof supabase !== 'undefined') {
-                supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                console.log("Supabase initialized.");
-            } else {
-                console.error("Supabase script not found.");
-            }
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-        });
-
         // PIN Logic
         function checkPin() {
             const enteredPin = document.getElementById('admin-pin').value;
             if(enteredPin === "sarita's_library") {
                 document.getElementById('admin-auth-overlay').classList.add('hidden');
-                if (supabaseClient) {
-                    fetchBooks(); 
-                    fetchEvents();
-                    fetchCurrentReader();
-                }
+                initApp();
             } else { 
                 alert("Incorrect PIN."); 
             }
+        }
+
+        function initApp() {
+            if (typeof supabase !== 'undefined') {
+                supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                fetchBooks(); 
+                fetchEvents();
+                fetchCurrentReader();
+            }
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
         function showTab(tabId) {
@@ -224,10 +219,9 @@
         async function fetchBooks() {
             if (!supabaseClient) return;
             const listElement = document.getElementById('books-list');
-            const countElement = document.getElementById('book-count');
             const { data, error } = await supabaseClient.from('books').select('*').order('created_at', {ascending: false});
             if (error) return;
-            countElement.innerText = `${data.length} Book${data.length !== 1 ? 's' : ''}`;
+            document.getElementById('book-count').innerText = `${data.length} Books`;
             listElement.innerHTML = data.map(b => `
                 <div class="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
                     <div class="flex items-center gap-4">
@@ -239,7 +233,7 @@
                             <p class="text-sm text-gray-500">by ${b.author}</p>
                         </div>
                     </div>
-                    <button onclick="deleteItem('books', '${b.id}', '${b.title}')" class="text-gray-300 hover:text-red-600 p-2"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
+                    <button onclick="deleteItem('books', '${b.id}', '${b.title.replace(/'/g, "\\'")}')" class="text-gray-300 hover:text-red-600 p-2"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
                 </div>
             `).join('');
             lucide.createIcons();
@@ -248,17 +242,16 @@
         async function fetchEvents() {
             if (!supabaseClient) return;
             const listElement = document.getElementById('events-list');
-            const countElement = document.getElementById('event-count');
             const { data, error } = await supabaseClient.from('events').select('*').order('event_date', {ascending: true});
             if (error) return;
-            countElement.innerText = `${data.length} Event${data.length !== 1 ? 's' : ''}`;
+            document.getElementById('event-count').innerText = `${data.length} Events`;
             listElement.innerHTML = data.map(e => `
                 <div class="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
                     <div>
                         <p class="font-bold text-gray-900 leading-tight">${e.title}</p>
                         <p class="text-xs text-purple-600 font-semibold mt-1">${new Date(e.event_date).toLocaleDateString()}</p>
                     </div>
-                    <button onclick="deleteItem('events', '${e.id}', '${e.title}')" class="text-gray-300 hover:text-red-600 p-2"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
+                    <button onclick="deleteItem('events', '${e.id}', '${e.title.replace(/'/g, "\\'")}')" class="text-gray-300 hover:text-red-600 p-2"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
                 </div>
             `).join('');
             lucide.createIcons();
@@ -269,7 +262,7 @@
             const { data, error } = await supabaseClient
                 .from('reader_of_the_month')
                 .select('*')
-                .eq('id', 'current-reader')
+                .eq('id', 'current') // MATCHES NEW SQL SCHEMA
                 .maybeSingle();
 
             if (data) {
@@ -282,9 +275,8 @@
 
         document.getElementById('book-form').onsubmit = async (e) => {
             e.preventDefault();
-            if (!supabaseClient) return;
             const btn = document.getElementById('b-submit');
-            btn.disabled = true; btn.innerText = 'Processing...';
+            btn.disabled = true; btn.innerText = 'Uploading...';
             try {
                 const url = await uploadImage(document.getElementById('b-file').files[0]);
                 await supabaseClient.from('books').insert([{
@@ -294,16 +286,15 @@
                     cover_url: url,
                     description: document.getElementById('b-desc').value
                 }]);
-                e.target.reset(); await fetchBooks();
+                e.target.reset(); fetchBooks();
             } catch(err) { alert(err.message); }
             finally { btn.disabled = false; btn.innerText = 'Save to Arrivals'; }
         };
 
         document.getElementById('event-form').onsubmit = async (e) => {
             e.preventDefault();
-            if (!supabaseClient) return;
             const btn = document.getElementById('e-submit');
-            btn.disabled = true; btn.innerText = 'Processing...';
+            btn.disabled = true; btn.innerText = 'Creating...';
             try {
                 const url = await uploadImage(document.getElementById('e-file').files[0]);
                 await supabaseClient.from('events').insert([{
@@ -312,28 +303,28 @@
                     image_url: url,
                     description: document.getElementById('e-desc').value
                 }]);
-                e.target.reset(); await fetchEvents();
+                e.target.reset(); fetchEvents();
             } catch(err) { alert(err.message); }
             finally { btn.disabled = false; btn.innerText = 'Create Event'; }
         };
 
         document.getElementById('reader-form').onsubmit = async (e) => {
             e.preventDefault();
-            if (!supabaseClient) return;
             const btn = document.getElementById('r-submit');
+            const icon = document.getElementById('r-icon');
             btn.disabled = true; 
-            btn.innerHTML = '<i data-lucide="refresh-cw" class="w-5 h-5 animate-spin"></i> Updating...';
-            lucide.createIcons();
+            btn.innerHTML = 'Updating...';
 
             try {
                 let url = document.getElementById('r-preview').src;
                 const file = document.getElementById('r-file').files[0];
                 if (file) url = await uploadImage(file);
 
+                // FIXED: Use 'current' (string) to match your new SQL table
                 const { error } = await supabaseClient
                     .from('reader_of_the_month')
                     .upsert({
-                        id: 'current-reader',
+                        id: 'current',
                         name: document.getElementById('r-name').value,
                         class_section: document.getElementById('r-class').value,
                         month_year: document.getElementById('r-month').value,
@@ -342,9 +333,9 @@
                     }, { onConflict: 'id' });
 
                 if (error) throw error;
-                alert("Reader of the Month updated successfully!");
+                alert("Reader of the Month replaced successfully!");
             } catch(err) {
-                alert("Update failed: " + err.message);
+                alert("Error: " + err.message);
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = '<i data-lucide="save" class="w-5 h-5 mr-2"></i> Update Reader';
@@ -354,11 +345,14 @@
 
         window.deleteItem = async (table, id, title) => {
             if(!supabaseClient) return;
-            if(confirm(`Remove "${title}"?`)) {
+            if(confirm(`Delete "${title}"?`)) {
                 await supabaseClient.from(table).delete().eq('id', id);
-                table === 'books' ? await fetchBooks() : await fetchEvents();
+                table === 'books' ? fetchBooks() : fetchEvents();
             }
         }
+
+        // Initialize Lucide for the Auth Screen
+        window.onload = () => lucide.createIcons();
     </script>
 </body>
 </html>
