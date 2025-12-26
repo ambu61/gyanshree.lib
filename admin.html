@@ -14,7 +14,6 @@
         .tab-content.active { display: block; }
         .tab-btn.active { border-color: #2563eb; color: #2563eb; background-color: #eff6ff; }
         
-        /* Custom scrollbar for management lists */
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
@@ -42,17 +41,20 @@
                 <p class="text-gray-500">Connected: sarita's_library</p>
             </div>
             <div class="flex gap-2">
-                <a href="new_arrivals.html" class="px-4 py-2 bg-white border rounded-lg text-sm font-semibold hover:bg-gray-50">View Arrivals</a>
-                <a href="events.html" class="px-4 py-2 bg-white border rounded-lg text-sm font-semibold hover:bg-gray-50">View Events</a>
+                <a href="index.html" class="px-4 py-2 bg-white border rounded-lg text-sm font-semibold hover:bg-gray-50">View Live Site</a>
             </div>
         </header>
 
-        <div class="grid grid-cols-2 gap-2 mb-8 bg-gray-200/50 p-1 rounded-xl shadow-inner">
-            <button onclick="showTab('books-section')" id="btn-books" class="tab-btn active py-3 rounded-lg font-bold text-gray-600 flex items-center justify-center transition-all">
-                <i data-lucide="book-plus" class="w-5 h-5 mr-2"></i> Books
+        <!-- Navigation Tabs -->
+        <div class="grid grid-cols-3 gap-2 mb-8 bg-gray-200/50 p-1 rounded-xl shadow-inner">
+            <button onclick="showTab('books-section')" id="btn-books" class="tab-btn active py-3 rounded-lg font-bold text-gray-600 flex items-center justify-center transition-all text-sm sm:text-base">
+                <i data-lucide="book-plus" class="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2"></i> Books
             </button>
-            <button onclick="showTab('events-section')" id="btn-events" class="tab-btn py-3 rounded-lg font-bold text-gray-600 flex items-center justify-center transition-all">
-                <i data-lucide="calendar-plus" class="w-5 h-5 mr-2"></i> Events
+            <button onclick="showTab('events-section')" id="btn-events" class="tab-btn py-3 rounded-lg font-bold text-gray-600 flex items-center justify-center transition-all text-sm sm:text-base">
+                <i data-lucide="calendar-plus" class="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2"></i> Events
+            </button>
+            <button onclick="showTab('reader-section')" id="btn-reader" class="tab-btn py-3 rounded-lg font-bold text-gray-600 flex items-center justify-center transition-all text-sm sm:text-base">
+                <i data-lucide="award" class="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2"></i> Reader
             </button>
         </div>
 
@@ -67,7 +69,7 @@
                     <input type="text" id="b-author" placeholder="Author" class="p-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500" required>
                     <input type="text" id="b-genre" placeholder="Genre" class="p-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
                     <div class="space-y-1">
-                        <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Cover Image (Upload File)</label>
+                        <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Cover Image</label>
                         <input type="file" id="b-file" accept="image/*" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                     </div>
                     <textarea id="b-desc" rows="3" placeholder="Brief Description..." class="p-3 bg-gray-50 border rounded-xl outline-none md:col-span-2 focus:ring-2 focus:ring-blue-500"></textarea>
@@ -75,7 +77,6 @@
                 </form>
             </section>
 
-            <!-- Book Management List -->
             <section class="bg-white rounded-2xl shadow-sm border overflow-hidden">
                 <div class="p-6 border-b bg-gray-50/50 flex justify-between items-center">
                     <h2 class="text-xl font-bold text-gray-800">Manage Arrivals</h2>
@@ -97,7 +98,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <input type="text" id="e-title" placeholder="Event Title" class="p-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-purple-500" required>
                         <div class="space-y-1">
-                            <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Promo Image (Upload File)</label>
+                            <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Promo Image</label>
                             <input type="file" id="e-file" accept="image/*" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100">
                         </div>
                     </div>
@@ -107,7 +108,6 @@
                 </form>
             </section>
 
-            <!-- Event Management List -->
             <section class="bg-white rounded-2xl shadow-sm border overflow-hidden">
                 <div class="p-6 border-b bg-gray-50/50 flex justify-between items-center">
                     <h2 class="text-xl font-bold text-gray-800">Manage Events</h2>
@@ -118,10 +118,52 @@
                 </div>
             </section>
         </div>
+
+        <!-- READER OF THE MONTH TAB -->
+        <div id="reader-section" class="tab-content space-y-8">
+            <section class="bg-white rounded-2xl shadow-sm border p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-bold text-orange-600 flex items-center">
+                        <i data-lucide="star" class="w-5 h-5 mr-2"></i> Reader of the Month
+                    </h2>
+                    <span class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Update Popup Content</span>
+                </div>
+                
+                <form id="reader-form" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="text-xs font-bold text-gray-500 mb-1 block">Student Name</label>
+                                <input type="text" id="r-name" placeholder="Full Name" class="w-full p-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-orange-500" required>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-gray-500 mb-1 block">Class/Section</label>
+                                <input type="text" id="r-class" placeholder="e.g. IX-B" class="w-full p-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-orange-500" required>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-gray-500 mb-1 block">Month Label</label>
+                                <input type="text" id="r-month" placeholder="e.g. OCTOBER 2025" class="w-full p-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-orange-500" required>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-2xl p-6 bg-gray-50/50">
+                            <div id="reader-preview-container" class="w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden mb-4 bg-gray-200">
+                                <img id="r-preview" src="https://placehold.co/200x200?text=No+Photo" class="w-full h-full object-cover">
+                            </div>
+                            <input type="file" id="r-file" accept="image/*" class="hidden" onchange="previewReaderImage(this)">
+                            <button type="button" onclick="document.getElementById('r-file').click()" class="text-orange-600 font-bold text-sm hover:underline">Change Student Photo</button>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="r-submit" class="w-full bg-orange-500 text-white py-4 rounded-xl font-bold hover:bg-orange-600 transition shadow-lg shadow-orange-100 flex items-center justify-center">
+                        <i data-lucide="save" class="w-5 h-5 mr-2"></i> Update Reader
+                    </button>
+                </form>
+            </section>
+        </div>
     </div>
 
     <script>
-        // --- CREDENTIALS ---
         const SUPABASE_URL = 'https://oizvyuciltowiospwaob.supabase.co'; 
         const SUPABASE_ANON_KEY = 'sb_publishable_QeoS6bMi2XcGSEstKng22w_PjySmNUx';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -133,9 +175,10 @@
                 document.getElementById('admin-auth-overlay').classList.add('hidden');
                 fetchBooks(); 
                 fetchEvents();
+                fetchCurrentReader();
                 if (typeof lucide !== 'undefined') lucide.createIcons();
             } else { 
-                alert("Incorrect PIN. Please try again."); 
+                alert("Incorrect PIN."); 
             }
         }
 
@@ -157,39 +200,33 @@
             return supabaseClient.storage.from('library-images').getPublicUrl(fileName).data.publicUrl;
         }
 
+        function previewReaderImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = e => document.getElementById('r-preview').src = e.target.result;
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // FETCH DATA
         async function fetchBooks() {
             const listElement = document.getElementById('books-list');
             const countElement = document.getElementById('book-count');
-            
             const { data, error } = await supabaseClient.from('books').select('*').order('created_at', {ascending: false});
-            
-            if (error) {
-                listElement.innerHTML = `<div class="p-4 text-red-500">Error loading books.</div>`;
-                return;
-            }
-
+            if (error) return;
             countElement.innerText = `${data.length} Book${data.length !== 1 ? 's' : ''}`;
-
-            if (data.length === 0) {
-                listElement.innerHTML = `<div class="p-10 text-center text-gray-400 italic">No books found in arrivals.</div>`;
-                return;
-            }
-
             listElement.innerHTML = data.map(b => `
                 <div class="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
                     <div class="flex items-center gap-4">
                         <div class="w-12 h-16 bg-gray-100 rounded overflow-hidden shadow-sm flex-shrink-0">
-                            <img src="${b.cover_url || 'https://placehold.co/40x60'}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/40x60/eee/999?text=No+Img'">
+                            <img src="${b.cover_url || 'https://placehold.co/40x60'}" class="w-full h-full object-cover">
                         </div>
                         <div>
                             <p class="font-bold text-gray-900 leading-tight">${b.title}</p>
                             <p class="text-sm text-gray-500">by ${b.author}</p>
-                            <span class="inline-block mt-1 px-2 py-0.5 bg-gray-100 text-[10px] font-bold text-gray-500 rounded uppercase tracking-wider">${b.genre || 'General'}</span>
                         </div>
                     </div>
-                    <button onclick="deleteItem('books', '${b.id}', '${b.title}')" class="text-gray-300 hover:text-red-600 p-2 transition-colors" title="Delete Book">
-                        <i data-lucide="trash-2" class="w-5 h-5"></i>
-                    </button>
+                    <button onclick="deleteItem('books', '${b.id}', '${b.title}')" class="text-gray-300 hover:text-red-600 p-2"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
                 </div>
             `).join('');
             lucide.createIcons();
@@ -198,38 +235,33 @@
         async function fetchEvents() {
             const listElement = document.getElementById('events-list');
             const countElement = document.getElementById('event-count');
-
             const { data, error } = await supabaseClient.from('events').select('*').order('event_date', {ascending: true});
-            
-            if (error) {
-                listElement.innerHTML = `<div class="p-4 text-red-500">Error loading events.</div>`;
-                return;
-            }
-
+            if (error) return;
             countElement.innerText = `${data.length} Event${data.length !== 1 ? 's' : ''}`;
-
-            if (data.length === 0) {
-                listElement.innerHTML = `<div class="p-10 text-center text-gray-400 italic">No scheduled events found.</div>`;
-                return;
-            }
-
             listElement.innerHTML = data.map(e => `
                 <div class="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
                     <div>
                         <p class="font-bold text-gray-900 leading-tight">${e.title}</p>
-                        <div class="flex items-center text-xs text-purple-600 font-semibold mt-1">
-                            <i data-lucide="calendar" class="w-3 h-3 mr-1"></i>
-                            ${new Date(e.event_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                        </div>
+                        <p class="text-xs text-purple-600 font-semibold mt-1">${new Date(e.event_date).toLocaleDateString()}</p>
                     </div>
-                    <button onclick="deleteItem('events', '${e.id}', '${e.title}')" class="text-gray-300 hover:text-red-600 p-2 transition-colors" title="Delete Event">
-                        <i data-lucide="trash-2" class="w-5 h-5"></i>
-                    </button>
+                    <button onclick="deleteItem('events', '${e.id}', '${e.title}')" class="text-gray-300 hover:text-red-600 p-2"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
                 </div>
             `).join('');
             lucide.createIcons();
         }
 
+        async function fetchCurrentReader() {
+            const { data, error } = await supabaseClient.from('reader_of_the_month').select('*').order('updated_at', {ascending: false}).limit(1);
+            if (data && data[0]) {
+                const r = data[0];
+                document.getElementById('r-name').value = r.name;
+                document.getElementById('r-class').value = r.class_section;
+                document.getElementById('r-month').value = r.month_year;
+                if (r.image_url) document.getElementById('r-preview').src = r.image_url;
+            }
+        }
+
+        // SUBMIT HANDLERS
         document.getElementById('book-form').onsubmit = async (e) => {
             e.preventDefault();
             const btn = document.getElementById('b-submit');
@@ -243,9 +275,8 @@
                     cover_url: url,
                     description: document.getElementById('b-desc').value
                 }]);
-                e.target.reset(); 
-                await fetchBooks();
-            } catch(err) { alert("Failed to save book: " + err.message); }
+                e.target.reset(); await fetchBooks();
+            } catch(err) { alert(err.message); }
             finally { btn.disabled = false; btn.innerText = 'Save to Arrivals'; }
         };
 
@@ -261,25 +292,48 @@
                     image_url: url,
                     description: document.getElementById('e-desc').value
                 }]);
-                e.target.reset(); 
-                await fetchEvents();
-            } catch(err) { alert("Failed to save event: " + err.message); }
+                e.target.reset(); await fetchEvents();
+            } catch(err) { alert(err.message); }
             finally { btn.disabled = false; btn.innerText = 'Create Event'; }
         };
 
+        document.getElementById('reader-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('r-submit');
+            btn.disabled = true; btn.innerHTML = '<i data-lucide="refresh-cw" class="w-5 h-5 animate-spin"></i> Updating...';
+            lucide.createIcons();
+
+            try {
+                let url = document.getElementById('r-preview').src;
+                const file = document.getElementById('r-file').files[0];
+                if (file) url = await uploadImage(file);
+
+                // We insert a new record so we have history, or update. 
+                // For simplicity, we'll insert a new one and the main page always takes the newest.
+                await supabaseClient.from('reader_of_the_month').insert([{
+                    name: document.getElementById('r-name').value,
+                    class_section: document.getElementById('r-class').value,
+                    month_year: document.getElementById('r-month').value,
+                    image_url: url
+                }]);
+
+                alert("Reader of the Month updated successfully!");
+            } catch(err) {
+                alert("Update failed: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i data-lucide="save" class="w-5 h-5 mr-2"></i> Update Reader';
+                lucide.createIcons();
+            }
+        };
+
         window.deleteItem = async (table, id, title) => {
-            if(confirm(`Are you sure you want to remove "${title}" permanently?`)) {
-                try {
-                    const { error } = await supabaseClient.from(table).delete().eq('id', id);
-                    if (error) throw error;
-                    table === 'books' ? await fetchBooks() : await fetchEvents();
-                } catch (err) {
-                    alert("Delete failed: " + err.message);
-                }
+            if(confirm(`Remove "${title}"?`)) {
+                await supabaseClient.from(table).delete().eq('id', id);
+                table === 'books' ? await fetchBooks() : await fetchEvents();
             }
         }
 
-        // Initialize Lucide for static elements
         document.addEventListener('DOMContentLoaded', () => {
             if (typeof lucide !== 'undefined') lucide.createIcons();
         });
