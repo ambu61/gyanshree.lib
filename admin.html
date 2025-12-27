@@ -3,325 +3,235 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Library Admin | Gyanshree</title>
+    <title>Library Admin - Gyanshree</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .admin-tab { display: none; }
-        .admin-tab.active { display: block; }
-        .sidebar-active { background: #eff6ff; color: #2563eb; border-right: 4px solid #2563eb; }
-        .upload-loading { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
-        
-        input[type="color"] {
-            -webkit-appearance: none;
-            border: none;
-            width: 50px;
-            height: 50px;
-            cursor: pointer;
-            background: none;
-        }
-        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
-        input[type="color"]::-webkit-color-swatch {
-            border: 3px solid #fff;
-            box-shadow: 0 0 0 1px #e2e8f0;
-            border-radius: 14px;
-        }
     </style>
 </head>
-<body class="bg-[#f8fafc] text-slate-900">
+<body class="bg-slate-50 text-slate-900 min-h-screen">
 
-    <!-- Auth Guard Overlay -->
-    <div id="auth-overlay" class="fixed inset-0 z-[100] bg-slate-900 flex items-center justify-center p-4">
-        <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-md w-full">
-            <div class="text-center mb-8">
-                <div class="bg-blue-600 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-200">
-                    <i data-lucide="lock" class="text-white w-8 h-8"></i>
+    <!-- Navigation -->
+    <nav class="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600 p-2 rounded-xl text-white">
+                    <i data-lucide="shield-check" class="w-5 h-5"></i>
                 </div>
-                <h2 class="text-2xl font-bold">Admin Portal</h2>
-                <p class="text-slate-500">Sign in to manage library content</p>
+                <h1 class="font-bold text-lg tracking-tight">Library Admin Panel</h1>
             </div>
-            <div class="space-y-4">
-                <input type="email" id="login-email" placeholder="Email Address" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none">
-                <input type="password" id="login-pass" placeholder="Password" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none">
-                <button onclick="handleLogin()" id="login-btn" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-all">Sign In</button>
-            </div>
+            <a href="index.html" class="text-slate-500 hover:text-blue-600 font-medium text-sm flex items-center gap-2 transition-colors">
+                <i data-lucide="external-link" class="w-4 h-4"></i> View Main Site
+            </a>
         </div>
-    </div>
+    </nav>
 
-    <div class="flex min-h-screen">
-        <!-- Sidebar -->
-        <aside class="w-64 bg-white border-r hidden lg:flex flex-col sticky top-0 h-screen">
-            <div class="p-6 border-b">
-                <h1 class="font-bold text-xl">Library Admin</h1>
-                <p class="text-xs text-slate-400 font-medium">Gyanshree School</p>
-            </div>
-            <nav class="flex-1 py-4">
-                <button onclick="switchTab('books')" id="tab-btn-books" class="sidebar-active w-full flex items-center gap-3 px-6 py-4 font-semibold text-slate-600 transition-all">
-                    <i data-lucide="book-open" class="w-5 h-5"></i> Manage Books
-                </button>
-                <button onclick="switchTab('events')" id="tab-btn-events" class="w-full flex items-center gap-3 px-6 py-4 font-semibold text-slate-600 transition-all hover:bg-slate-50">
-                    <i data-lucide="calendar" class="w-5 h-5"></i> Library Events
-                </button>
-                <button onclick="switchTab('reader')" id="tab-btn-reader" class="w-full flex items-center gap-3 px-6 py-4 font-semibold text-slate-600 transition-all hover:bg-slate-50">
-                    <i data-lucide="award" class="w-5 h-5"></i> Reader of the Month
-                </button>
-            </nav>
-            <div class="p-4 border-t">
-                <button onclick="handleLogout()" class="w-full flex items-center gap-3 px-4 py-2 text-red-500 font-medium hover:bg-red-50 rounded-lg">
-                    <i data-lucide="log-out" class="w-4 h-4"></i> Sign Out
-                </button>
-            </div>
-        </aside>
-
-        <!-- Main Content -->
-        <main class="flex-1 p-8 lg:p-12">
-            
-            <section id="tab-books" class="admin-tab active">
-                <div class="flex justify-between items-center mb-8">
-                    <h2 class="text-3xl font-bold tracking-tight">Manage New Arrivals</h2>
-                    <button onclick="openModal('book')" class="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-blue-700">
-                        <i data-lucide="plus" class="w-5 h-5"></i> Add New Book
-                    </button>
+    <main class="max-w-4xl mx-auto px-6 py-10 space-y-12">
+        
+        <!-- SECTION 1: READER OF THE MONTH -->
+        <section id="reader-section" class="space-y-6">
+            <div class="flex items-center gap-3">
+                <div class="bg-amber-100 p-2 rounded-lg text-amber-600">
+                    <i data-lucide="star" class="w-6 h-6"></i>
                 </div>
-                <div id="books-list" class="grid gap-4"></div>
-            </section>
+                <h2 class="text-2xl font-bold">Reader of the Month</h2>
+            </div>
 
-            <section id="tab-events" class="admin-tab">
-                <div class="flex justify-between items-center mb-8">
-                    <h2 class="text-3xl font-bold tracking-tight">Manage Events</h2>
-                    <button onclick="openModal('event')" class="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-blue-700">
-                        <i data-lucide="plus" class="w-5 h-5"></i> Add New Event
+            <div class="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-200">
+                <form id="rotm-form" class="space-y-6">
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Student Name</label>
+                            <input type="text" id="rotm-name" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-50 outline-none transition-all" placeholder="Enter full name">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Class & Section</label>
+                            <input type="text" id="rotm-class" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-50 outline-none transition-all" placeholder="e.g. 10-A">
+                        </div>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Month & Year</label>
+                            <input type="text" id="rotm-period" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-50 outline-none transition-all" placeholder="e.g. January 2025">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Photo Link (URL)</label>
+                            <input type="url" id="rotm-url" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-50 outline-none transition-all" placeholder="https://image-link.com/photo.jpg">
+                        </div>
+                    </div>
+
+                    <!-- Helpful tip for images -->
+                    <div class="bg-blue-50 rounded-2xl p-4 flex gap-3 items-start border border-blue-100">
+                        <i data-lucide="info" class="w-5 h-5 text-blue-500 mt-0.5"></i>
+                        <p class="text-sm text-blue-700">
+                            <strong>How to get a Photo URL:</strong> To "upload", first upload your image to a safe site like <span class="font-mono bg-blue-100 px-1 rounded">PostImages.org</span> or <span class="font-mono bg-blue-100 px-1 rounded">ImgBB</span>, then copy the "Direct Link" and paste it here.
+                        </p>
+                    </div>
+
+                    <button type="submit" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl hover:bg-blue-700 transition shadow-lg shadow-blue-100 flex items-center justify-center gap-2">
+                        <i data-lucide="check-circle" class="w-5 h-5"></i> Update Featured Reader
                     </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- SECTION 2: NEW ARRIVALS -->
+        <section id="books-section" class="space-y-6">
+            <div class="flex items-center gap-3">
+                <div class="bg-indigo-100 p-2 rounded-lg text-indigo-600">
+                    <i data-lucide="book-plus" class="w-6 h-6"></i>
                 </div>
-                <div id="events-list" class="grid gap-4"></div>
-            </section>
+                <h2 class="text-2xl font-bold">Manage New Arrivals</h2>
+            </div>
 
-            <!-- Reader Tab -->
-            <section id="tab-reader" class="admin-tab">
-                <h2 class="text-3xl font-bold tracking-tight mb-8">Update Reader of the Month</h2>
-                <div class="max-w-xl bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
-                    <div class="space-y-6">
-                        <!-- Student Info -->
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="col-span-2">
-                                <label class="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">Student Name</label>
-                                <input type="text" id="rotm-name" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">Grade/Section</label>
-                                <input type="text" id="rotm-class" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">Month & Year</label>
-                                <input type="text" id="rotm-period" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
-                            </div>
+            <!-- Form Card -->
+            <div class="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-200">
+                <form id="book-form" class="space-y-6">
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Book Title</label>
+                            <input type="text" id="book-title" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-50 outline-none transition-all" placeholder="Enter book title">
                         </div>
-
-                        <!-- Theme Configurator -->
-                        <div class="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 flex items-center gap-6">
-                            <div class="relative group">
-                                <input type="color" id="rotm-color" value="#2563eb" oninput="document.getElementById('color-preview-label').innerText = this.value.toUpperCase()">
-                                <div class="absolute -bottom-1 -right-1 bg-white rounded-full p-1 shadow-sm border border-slate-100">
-                                    <i data-lucide="palette" class="w-3 h-3 text-slate-400"></i>
-                                </div>
-                            </div>
-                            <div class="flex-1">
-                                <span id="color-preview-label" class="text-sm font-mono font-bold text-slate-600">#2563EB</span>
-                                <p class="text-xs text-slate-400 font-medium">Pick a custom theme color for this reader's spotlight</p>
-                            </div>
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Author</label>
+                            <input type="text" id="book-author" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-50 outline-none transition-all" placeholder="Author name">
                         </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Cover Image Link (URL)</label>
+                        <input type="url" id="book-cover" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-50 outline-none transition-all" placeholder="Paste the cover image link here">
+                    </div>
+                    <button type="submit" class="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl hover:bg-slate-800 transition shadow-lg flex items-center justify-center gap-2">
+                        <i data-lucide="plus" class="w-5 h-5"></i> Add to New Arrivals
+                    </button>
+                </form>
+            </div>
 
-                        <!-- Photo -->
-                        <div>
-                            <label class="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">Student Photo</label>
-                            <div class="flex gap-4 items-center">
-                                <div id="rotm-preview" class="w-24 h-24 rounded-2xl bg-slate-100 border border-dashed border-slate-300 flex items-center justify-center overflow-hidden">
-                                    <i data-lucide="image" class="text-slate-300"></i>
-                                </div>
-                                <div class="flex-1">
-                                    <input type="file" id="rotm-file" accept="image/*" class="hidden" onchange="uploadImage(event, 'rotm-url', 'rotm-preview')">
-                                    <button onclick="document.getElementById('rotm-file').click()" class="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-slate-50 transition-colors">
-                                        Choose New Photo
-                                    </button>
-                                    <input type="hidden" id="rotm-url">
-                                </div>
-                            </div>
+            <!-- List Card -->
+            <div class="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-200">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4 ml-2">Current Collection</h3>
+                <div id="books-list" class="grid grid-cols-1 gap-3">
+                    <!-- Dynamic Book Items -->
+                    <div class="animate-pulse flex space-x-4 p-4">
+                        <div class="rounded-lg bg-slate-100 h-16 w-12"></div>
+                        <div class="flex-1 space-y-3 py-1">
+                            <div class="h-2 bg-slate-100 rounded w-3/4"></div>
+                            <div class="h-2 bg-slate-100 rounded w-1/2"></div>
                         </div>
-
-                        <button onclick="updateReader()" id="rotm-save-btn" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100">
-                            Update Reader Spotlight
-                        </button>
                     </div>
                 </div>
-            </section>
-        </main>
-    </div>
-
-    <!-- Generic Modal (Add/Edit) -->
-    <div id="form-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-[200] backdrop-blur-sm">
-        <div class="bg-white w-full max-w-lg rounded-3xl p-8 shadow-2xl">
-            <div class="flex justify-between items-center mb-6">
-                <h3 id="modal-title" class="text-xl font-bold">Add Entry</h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-900"><i data-lucide="x"></i></button>
             </div>
-            <form id="entry-form" class="space-y-4">
-                <input type="hidden" id="entry-type">
-                <div id="form-fields" class="space-y-4"></div>
-                <button type="submit" id="save-btn" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-all mt-4">Save Entry</button>
-            </form>
-        </div>
+        </section>
+
+    </main>
+
+    <!-- UI Elements -->
+    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-full shadow-2xl transition-all opacity-0 translate-y-4 pointer-events-none z-[200] flex items-center gap-3">
+        <i data-lucide="check-circle-2" class="w-5 h-5 text-green-400"></i>
+        <span id="toast-text">Success!</span>
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://oizvyuciltowiospwaob.supabase.co'; 
+        const SUPABASE_URL = 'https://oizvyuciltowiospwaob.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_QeoS6bMi2XcGSEstKng22w_PjySmNUx';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        async function handleLogin() {
-            const email = document.getElementById('login-email').value;
-            const pass = document.getElementById('login-pass').value;
-            const btn = document.getElementById('login-btn');
-            btn.innerText = 'Verifying...';
-            const { error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
-            if (error) { alert("Login Failed: " + error.message); btn.innerText = 'Sign In'; } 
-            else { checkUser(); }
-        }
-
-        async function handleLogout() {
-            await supabaseClient.auth.signOut();
-            location.reload();
-        }
-
-        async function checkUser() {
-            const { data: { user } } = await supabaseClient.auth.getUser();
-            if (user) {
-                document.getElementById('auth-overlay').classList.add('hidden');
-                refreshData();
-            }
-        }
-
-        async function uploadImage(event, targetInputId, previewId) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const previewEl = document.getElementById(previewId);
-            previewEl.classList.add('upload-loading');
-            
-            const fileName = `${Math.random()}.${file.name.split('.').pop()}`;
-            const { data, error } = await supabaseClient.storage.from('library-assets').upload(fileName, file);
-            
-            if (error) { alert(error.message); previewEl.classList.remove('upload-loading'); return; }
-
-            const { data: { publicUrl } } = supabaseClient.storage.from('library-assets').getPublicUrl(fileName);
-            document.getElementById(targetInputId).value = publicUrl;
-            previewEl.classList.remove('upload-loading');
-            previewEl.innerHTML = `<img src="${publicUrl}" class="w-full h-full object-cover">`;
-        }
-
-        function switchTab(tab) {
-            document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
-            document.getElementById(`tab-${tab}`).classList.add('active');
-            document.querySelectorAll('nav button').forEach(b => b.classList.remove('sidebar-active'));
-            document.getElementById(`tab-btn-${tab}`).classList.add('sidebar-active');
-            refreshData();
+        async function init() {
             lucide.createIcons();
+            loadCurrentReader();
+            loadBooks();
         }
 
-        async function refreshData() {
-            const currentTab = document.querySelector('.admin-tab.active').id;
-            
-            if (currentTab === 'tab-books') {
-                const { data } = await supabaseClient.from('books').select('*').order('created_at', {ascending: false});
-                const list = document.getElementById('books-list');
-                list.innerHTML = (data || []).map(b => `
-                    <div class="bg-white p-4 rounded-2xl flex items-center justify-between border border-slate-100 shadow-sm">
-                        <div class="flex items-center gap-4">
-                            <img src="${b.cover_url}" class="w-12 h-16 object-cover rounded-md shadow-sm bg-slate-100">
-                            <div><h4 class="font-bold text-sm">${b.title}</h4><p class="text-xs text-slate-500">${b.author}</p></div>
-                        </div>
-                        <button onclick="deleteEntry('books', '${b.id}')" class="text-slate-300 hover:text-red-500 p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </div>
-                `).join('');
+        async function loadCurrentReader() {
+            const { data } = await supabaseClient.from('reader_of_the_month').select('*').eq('id', 'current').single();
+            if (data) {
+                document.getElementById('rotm-name').value = data.name;
+                document.getElementById('rotm-class').value = data.class_section;
+                document.getElementById('rotm-period').value = data.month_year;
+                document.getElementById('rotm-url').value = data.image_url;
             }
-
-            if (currentTab === 'tab-reader') {
-                const { data } = await supabaseClient.from('reader_of_the_month').select('*').eq('id', 'current').single();
-                if (data) {
-                    document.getElementById('rotm-name').value = data.name || '';
-                    document.getElementById('rotm-class').value = data.class_section || '';
-                    document.getElementById('rotm-period').value = data.month_year || '';
-                    document.getElementById('rotm-url').value = data.image_url || '';
-                    const color = data.bg_color || '#2563eb';
-                    document.getElementById('rotm-color').value = color;
-                    document.getElementById('color-preview-label').innerText = color.toUpperCase();
-                    if (data.image_url) document.getElementById('rotm-preview').innerHTML = `<img src="${data.image_url}" class="w-full h-full object-cover">`;
-                }
-            }
-            lucide.createIcons();
         }
 
-        async function updateReader() {
-            const updates = {
+        document.getElementById('rotm-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            btn.disabled = true;
+            btn.innerText = 'Updating...';
+
+            const { error } = await supabaseClient.from('reader_of_the_month').upsert({
+                id: 'current',
                 name: document.getElementById('rotm-name').value,
                 class_section: document.getElementById('rotm-class').value,
                 month_year: document.getElementById('rotm-period').value,
-                image_url: document.getElementById('rotm-url').value,
-                bg_color: document.getElementById('rotm-color').value
-            };
-            const { error } = await supabaseClient.from('reader_of_the_month').update(updates).eq('id', 'current');
-            if(error) alert(error.message);
-            else alert("Reader Spotlight Updated Successfully!");
-        }
+                image_url: document.getElementById('rotm-url').value
+            });
 
-        async function deleteEntry(table, id) {
-            if(!confirm("Are you sure?")) return;
-            await supabaseClient.from(table).delete().eq('id', id);
-            refreshData();
-        }
+            btn.disabled = false;
+            btn.innerHTML = '<i data-lucide="check-circle" class="w-5 h-5"></i> Update Featured Reader';
+            lucide.createIcons();
+            showToast(error ? 'Error updating' : 'Reader of the Month updated!');
+        };
 
-        function openModal(type) {
-            const modal = document.getElementById('form-modal');
-            const fields = document.getElementById('form-fields');
-            const title = document.getElementById('modal-title');
-            document.getElementById('entry-type').value = type;
-            modal.classList.replace('hidden', 'flex');
-            
-            if(type === 'book') {
-                title.innerText = "Add New Book";
-                fields.innerHTML = `
-                    <input type="text" name="title" placeholder="Book Title" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none" required>
-                    <input type="text" name="author" placeholder="Author Name" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none" required>
-                    <input type="hidden" name="cover_url" id="modal-url" required>
-                    <input type="file" accept="image/*" class="w-full text-xs" onchange="uploadImage(event, 'modal-url', 'modal-preview')">
-                    <div id="modal-preview" class="w-16 h-20 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center overflow-hidden"><i data-lucide="image" class="text-slate-300"></i></div>
-                `;
-            } else {
-                title.innerText = "Add New Event";
-                fields.innerHTML = `
-                    <input type="text" name="title" placeholder="Event Title" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none" required>
-                    <input type="date" name="event_date" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none" required>
-                    <input type="hidden" name="image_url" id="modal-url">
-                    <input type="file" accept="image/*" class="w-full text-xs" onchange="uploadImage(event, 'modal-url', 'modal-preview')">
-                    <div id="modal-preview" class="w-20 h-14 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center overflow-hidden"><i data-lucide="image" class="text-slate-300"></i></div>
-                `;
+        document.getElementById('book-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const { error } = await supabaseClient.from('books').insert({
+                title: document.getElementById('book-title').value,
+                author: document.getElementById('book-author').value,
+                cover_url: document.getElementById('book-cover').value
+            });
+            if (!error) {
+                e.target.reset();
+                loadBooks();
+                showToast('Book added successfully!');
             }
+        };
+
+        async function loadBooks() {
+            const { data } = await supabaseClient.from('books').select('*').order('created_at', {ascending: false});
+            const list = document.getElementById('books-list');
+            
+            if (!data || data.length === 0) {
+                list.innerHTML = `<div class="p-8 text-center text-slate-400 italic">No books in the collection yet.</div>`;
+                return;
+            }
+
+            list.innerHTML = data.map(book => `
+                <div class="group bg-slate-50 hover:bg-white p-4 rounded-2xl flex items-center justify-between border border-transparent hover:border-slate-200 transition-all">
+                    <div class="flex items-center gap-4">
+                        <img src="${book.cover_url}" class="w-10 h-14 object-cover rounded-lg shadow-sm">
+                        <div>
+                            <h4 class="font-bold text-slate-800 leading-tight">${book.title}</h4>
+                            <p class="text-xs text-slate-500 mt-0.5">${book.author}</p>
+                        </div>
+                    </div>
+                    <button onclick="deleteBook('${book.id}')" class="text-slate-300 hover:text-red-500 p-2 transition-colors">
+                        <i data-lucide="trash-2" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            `).join('');
             lucide.createIcons();
         }
 
-        function closeModal() { document.getElementById('form-modal').classList.replace('flex', 'hidden'); }
+        async function deleteBook(id) {
+            if (confirm('Are you sure you want to remove this book?')) {
+                await supabaseClient.from('books').delete().eq('id', id);
+                loadBooks();
+                showToast('Book removed');
+            }
+        }
 
-        document.getElementById('entry-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const table = document.getElementById('entry-type').value === 'book' ? 'books' : 'events';
-            const { error } = await supabaseClient.from(table).insert([Object.fromEntries(formData.entries())]);
-            if(error) alert(error.message); else { closeModal(); refreshData(); }
-        };
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-text').innerText = msg;
+            t.classList.remove('opacity-0', 'translate-y-4');
+            setTimeout(() => t.classList.add('opacity-0', 'translate-y-4'), 3000);
+        }
 
-        window.onload = checkUser;
+        window.onload = init;
     </script>
 </body>
 </html>
