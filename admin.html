@@ -15,11 +15,26 @@
         .sidebar-active { background: #eff6ff; color: #2563eb; border-right: 4px solid #2563eb; }
         .upload-loading { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+        
+        /* Custom styling for the color input to look like a "wheel" button */
+        input[type="color"] {
+            -webkit-appearance: none;
+            border: none;
+            width: 44px;
+            height: 44px;
+            cursor: pointer;
+            background: none;
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+        }
     </style>
 </head>
 <body class="bg-[#f8fafc] text-slate-900">
 
-    <!-- Auth Guard Overlay -->
+    <!-- Auth Guard Overlay (Kept from previous version) -->
     <div id="auth-overlay" class="fixed inset-0 z-[100] bg-slate-900 flex items-center justify-center p-4">
         <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-md w-full">
             <div class="text-center mb-8">
@@ -73,9 +88,7 @@
                         <i data-lucide="plus" class="w-5 h-5"></i> Add New Book
                     </button>
                 </div>
-                <div id="books-list" class="grid gap-4">
-                    <!-- Dynamic Book List -->
-                </div>
+                <div id="books-list" class="grid gap-4"></div>
             </section>
 
             <!-- Library Events Tab -->
@@ -86,9 +99,7 @@
                         <i data-lucide="plus" class="w-5 h-5"></i> Add New Event
                     </button>
                 </div>
-                <div id="events-list" class="grid gap-4">
-                    <!-- Dynamic Event List -->
-                </div>
+                <div id="events-list" class="grid gap-4"></div>
             </section>
 
             <!-- Reader Tab -->
@@ -96,6 +107,7 @@
                 <h2 class="text-3xl font-bold tracking-tight mb-8">Update Reader of the Month</h2>
                 <div class="max-w-xl bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
                     <div class="space-y-6">
+                        <!-- Student Info -->
                         <div>
                             <label class="block text-sm font-bold mb-2">Student Name</label>
                             <input type="text" id="rotm-name" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
@@ -110,26 +122,42 @@
                                 <input type="text" id="rotm-period" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
                             </div>
                         </div>
+
+                        <!-- Card Color Configurator -->
+                        <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                            <label class="block text-sm font-bold mb-3 text-slate-700">Card Background Theme</label>
+                            <div class="flex items-center gap-4">
+                                <input type="color" id="rotm-color" value="#f97316" class="shrink-0" oninput="updateColorLabel(this.value)">
+                                <div class="flex-1">
+                                    <span id="color-hex" class="text-xs font-mono font-bold text-slate-500">#F97316</span>
+                                    <p class="text-xs text-slate-400">Choose a theme color for the spotlight card</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Student Photo -->
                         <div>
                             <label class="block text-sm font-bold mb-2">Student Photo</label>
                             <div class="flex gap-4 items-center">
-                                <div id="rotm-preview" class="w-20 h-20 rounded-xl bg-slate-100 border border-dashed border-slate-300 flex items-center justify-center overflow-hidden">
+                                <div id="rotm-preview" class="w-24 h-24 rounded-2xl bg-slate-100 border border-dashed border-slate-300 flex items-center justify-center overflow-hidden">
                                     <i data-lucide="image" class="text-slate-300"></i>
                                 </div>
                                 <div class="flex-1">
                                     <input type="file" id="rotm-file" accept="image/*" class="hidden" onchange="uploadImage(event, 'rotm-url', 'rotm-preview')">
-                                    <button onclick="document.getElementById('rotm-file').click()" class="bg-slate-100 text-slate-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-200">
+                                    <button onclick="document.getElementById('rotm-file').click()" class="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-slate-50 transition-colors">
                                         Choose New Photo
                                     </button>
                                     <input type="hidden" id="rotm-url">
                                 </div>
                             </div>
                         </div>
-                        <button onclick="updateReader()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-all">Update Spotlight</button>
+
+                        <button onclick="updateReader()" id="rotm-save-btn" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100">
+                            Update Spotlight
+                        </button>
                     </div>
                 </div>
             </section>
-
         </main>
     </div>
 
@@ -142,9 +170,7 @@
             </div>
             <form id="entry-form" class="space-y-4">
                 <input type="hidden" id="entry-type">
-                <div id="form-fields" class="space-y-4">
-                    <!-- Fields injected based on type -->
-                </div>
+                <div id="form-fields" class="space-y-4"></div>
                 <button type="submit" id="save-btn" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-all mt-4">Save Entry</button>
             </form>
         </div>
@@ -188,22 +214,28 @@
             }
         }
 
-        // Image Upload Logic
+        function updateColorLabel(val) {
+            document.getElementById('color-hex').innerText = val.toUpperCase();
+        }
+
         async function uploadImage(event, targetInputId, previewId) {
             const file = event.target.files[0];
             if (!file) return;
 
             const previewEl = document.getElementById(previewId);
             const saveBtn = document.getElementById('save-btn');
+            const rotmBtn = document.getElementById('rotm-save-btn');
+
             if (previewEl) previewEl.classList.add('upload-loading');
             if (saveBtn) saveBtn.disabled = true;
+            if (rotmBtn) rotmBtn.disabled = true;
 
             const fileExt = file.name.split('.').pop();
             const fileName = `${Math.random()}.${fileExt}`;
             const filePath = `${fileName}`;
 
             const { data, error } = await supabaseClient.storage
-                .from('library-assets') // Make sure this bucket is public in Supabase
+                .from('library-assets')
                 .upload(filePath, file);
 
             if (error) {
@@ -223,6 +255,7 @@
                 previewEl.innerHTML = `<img src="${publicUrl}" class="w-full h-full object-cover">`;
             }
             if (saveBtn) saveBtn.disabled = false;
+            if (rotmBtn) rotmBtn.disabled = false;
         }
 
         function switchTab(tab) {
@@ -247,11 +280,11 @@
                         <div class="flex items-center gap-4">
                             <img src="${b.cover_url}" class="w-12 h-16 object-cover rounded-md shadow-sm bg-slate-100">
                             <div>
-                                <h4 class="font-bold">${b.title}</h4>
+                                <h4 class="font-bold text-sm">${b.title}</h4>
                                 <p class="text-xs text-slate-500">${b.author}</p>
                             </div>
                         </div>
-                        <button onclick="deleteEntry('books', '${b.id}')" class="text-red-400 hover:text-red-600 p-2"><i data-lucide="trash-2"></i></button>
+                        <button onclick="deleteEntry('books', '${b.id}')" class="text-slate-300 hover:text-red-500 p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </div>
                 `).join('');
             }
@@ -262,10 +295,10 @@
                 list.innerHTML = (data || []).map(e => `
                     <div class="bg-white p-4 rounded-2xl flex items-center justify-between border border-slate-100 shadow-sm">
                         <div>
-                            <h4 class="font-bold">${e.title}</h4>
-                            <p class="text-xs text-blue-600 font-bold">${e.event_date}</p>
+                            <h4 class="font-bold text-sm">${e.title}</h4>
+                            <p class="text-[10px] text-blue-600 font-bold uppercase tracking-wider">${e.event_date}</p>
                         </div>
-                        <button onclick="deleteEntry('events', '${e.id}')" class="text-red-400 hover:text-red-600 p-2"><i data-lucide="trash-2"></i></button>
+                        <button onclick="deleteEntry('events', '${e.id}')" class="text-slate-300 hover:text-red-500 p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </div>
                 `).join('');
             }
@@ -273,14 +306,32 @@
             if (currentTab === 'tab-reader') {
                 const { data } = await supabaseClient.from('reader_of_the_month').select('*').eq('id', 'current').single();
                 if (data) {
-                    document.getElementById('rotm-name').value = data.name;
-                    document.getElementById('rotm-class').value = data.class_section;
-                    document.getElementById('rotm-period').value = data.month_year;
-                    document.getElementById('rotm-url').value = data.image_url;
-                    document.getElementById('rotm-preview').innerHTML = `<img src="${data.image_url}" class="w-full h-full object-cover">`;
+                    document.getElementById('rotm-name').value = data.name || '';
+                    document.getElementById('rotm-class').value = data.class_section || '';
+                    document.getElementById('rotm-period').value = data.month_year || '';
+                    document.getElementById('rotm-url').value = data.image_url || '';
+                    document.getElementById('rotm-color').value = data.bg_color || '#f97316';
+                    updateColorLabel(data.bg_color || '#f97316');
+                    
+                    if (data.image_url) {
+                        document.getElementById('rotm-preview').innerHTML = `<img src="${data.image_url}" class="w-full h-full object-cover">`;
+                    }
                 }
             }
             lucide.createIcons();
+        }
+
+        async function updateReader() {
+            const updates = {
+                name: document.getElementById('rotm-name').value,
+                class_section: document.getElementById('rotm-class').value,
+                month_year: document.getElementById('rotm-period').value,
+                image_url: document.getElementById('rotm-url').value,
+                bg_color: document.getElementById('rotm-color').value
+            };
+            const { error } = await supabaseClient.from('reader_of_the_month').update(updates).eq('id', 'current');
+            if(error) alert(error.message);
+            else alert("Reader Spotlight Updated Successfully!");
         }
 
         async function deleteEntry(table, id) {
@@ -290,36 +341,20 @@
             else refreshData();
         }
 
-        async function updateReader() {
-            const updates = {
-                name: document.getElementById('rotm-name').value,
-                class_section: document.getElementById('rotm-class').value,
-                month_year: document.getElementById('rotm-period').value,
-                image_url: document.getElementById('rotm-url').value,
-            };
-            const { error } = await supabaseClient.from('reader_of_the_month').update(updates).eq('id', 'current');
-            if(error) alert(error.message);
-            else alert("Reader Spotlight Updated!");
-        }
-
         function openModal(type) {
             const modal = document.getElementById('form-modal');
             const fields = document.getElementById('form-fields');
             const title = document.getElementById('modal-title');
             document.getElementById('entry-type').value = type;
-            
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
+            modal.classList.replace('hidden', 'flex');
             
             if(type === 'book') {
                 title.innerText = "Add New Book";
                 fields.innerHTML = `
                     <input type="text" name="title" placeholder="Book Title" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none" required>
                     <input type="text" name="author" placeholder="Author Name" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none" required>
-                    <input type="text" name="genre" placeholder="Genre (e.g. Mystery)" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none">
-                    
                     <div class="space-y-2">
-                        <label class="text-xs font-bold text-slate-500 uppercase">Cover Image</label>
+                        <label class="text-xs font-bold text-slate-500">COVER IMAGE</label>
                         <div class="flex gap-4 items-center">
                             <div id="modal-preview" class="w-16 h-20 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center overflow-hidden">
                                 <i data-lucide="image" class="text-slate-300"></i>
@@ -336,10 +371,8 @@
                 fields.innerHTML = `
                     <input type="text" name="title" placeholder="Event Title" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none" required>
                     <input type="date" name="event_date" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none" required>
-                    <textarea name="description" placeholder="Short Event Description" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none h-24"></textarea>
-                    
                     <div class="space-y-2">
-                        <label class="text-xs font-bold text-slate-500 uppercase">Event Image</label>
+                        <label class="text-xs font-bold text-slate-500">EVENT BANNER</label>
                         <div class="flex gap-4 items-center">
                             <div id="modal-preview" class="w-20 h-14 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center overflow-hidden">
                                 <i data-lucide="image" class="text-slate-300"></i>
@@ -356,8 +389,7 @@
         }
 
         function closeModal() {
-            document.getElementById('form-modal').classList.add('hidden');
-            document.getElementById('form-modal').classList.remove('flex');
+            document.getElementById('form-modal').classList.replace('flex', 'hidden');
         }
 
         document.getElementById('entry-form').onsubmit = async (e) => {
