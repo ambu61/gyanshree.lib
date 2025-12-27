@@ -3,346 +3,291 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Library Admin - Gyanshree School</title>
+    <title>Secure Library Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        .tab-btn.active { border-color: #2563eb; color: #2563eb; background-color: #eff6ff; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+        .loader { border-top-color: #10b981; animation: spinner 0.6s linear infinite; }
+        @keyframes spinner { to { transform: rotate(360deg); } }
         
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
+        /* Grid styling for 6-digit OTP */
+        .otp-container {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
         }
-        .shake { animation: shake 0.2s ease-in-out 0s 2; }
+        .otp-digit {
+            width: 100%;
+            height: 60px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            background: #f8fafc;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .otp-digit:focus {
+            border-color: #10b981;
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+        }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen pb-20">
+<body class="bg-slate-50 text-slate-900 min-h-screen">
 
-    <!-- Auth Overlay -->
-    <div id="admin-auth-overlay" class="fixed inset-0 bg-white z-[100] flex items-center justify-center p-4">
-        <div id="auth-card" class="max-w-md w-full text-center">
-            <div id="auth-icon-container" class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6 transition-colors duration-300">
-                <i id="auth-icon" data-lucide="lock" class="w-10 h-10 text-blue-600"></i>
-            </div>
-            <h1 class="text-2xl font-bold mb-2">Admin Access</h1>
-            <p id="auth-status" class="text-gray-500 mb-8">Verify credentials to manage library data.</p>
+    <!-- Auth Screen -->
+    <div id="auth-screen" class="fixed inset-0 z-50 bg-slate-100 flex items-center justify-center p-4">
+        <div class="max-w-md w-full bg-white rounded-3xl shadow-2xl p-8 border border-slate-200">
             
-            <div class="space-y-4">
-                <input type="password" id="admin-pin" placeholder="Enter Admin PIN" 
-                    class="w-full p-4 border-2 border-gray-100 rounded-xl focus:border-blue-500 outline-none text-center transition-all">
-                
-                <button id="login-btn" onclick="checkPin()" 
-                    class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-100 active:scale-[0.98]">
-                    Unlock Dashboard
-                </button>
+            <!-- Step 1: Login -->
+            <div id="step-login">
+                <div class="flex flex-col items-center mb-8">
+                    <div class="w-16 h-16 bg-emerald-600 rounded-2xl flex items-center justify-center mb-4">
+                        <i data-lucide="lock" class="text-white w-8 h-8"></i>
+                    </div>
+                    <h1 class="text-2xl font-bold text-center">Admin Login</h1>
+                    <p class="text-slate-500 text-sm">Enter your school credentials</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Email</label>
+                        <input type="email" id="email" placeholder="admin@school.com" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Password</label>
+                        <input type="password" id="pass-field" placeholder="••••••••" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div id="auth-msg" class="text-sm text-red-500 font-medium min-h-[20px]"></div>
+                    
+                    <button onclick="requestOTP()" id="login-btn" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-black transition-all">
+                        Request 6-Digit Code
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2: 6-Digit OTP -->
+            <div id="step-otp" class="hidden">
+                <div class="flex flex-col items-center mb-8">
+                    <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mb-4">
+                        <i data-lucide="shield-check" class="text-white w-8 h-8"></i>
+                    </div>
+                    <h1 class="text-2xl font-bold">Verification</h1>
+                    <p class="text-slate-500 text-sm text-center">Enter the 6-digit code sent to your email</p>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="otp-container" id="otp-inputs">
+                        <input type="text" maxlength="1" class="otp-digit" oninput="moveFocus(this, 0)" onkeydown="handleDelete(event, 0)">
+                        <input type="text" maxlength="1" class="otp-digit" oninput="moveFocus(this, 1)" onkeydown="handleDelete(event, 1)">
+                        <input type="text" maxlength="1" class="otp-digit" oninput="moveFocus(this, 2)" onkeydown="handleDelete(event, 2)">
+                        <input type="text" maxlength="1" class="otp-digit" oninput="moveFocus(this, 3)" onkeydown="handleDelete(event, 3)">
+                        <input type="text" maxlength="1" class="otp-digit" oninput="moveFocus(this, 4)" onkeydown="handleDelete(event, 4)">
+                        <input type="text" maxlength="1" class="otp-digit" oninput="moveFocus(this, 5)" onkeydown="handleDelete(event, 5)">
+                    </div>
+
+                    <div id="otp-msg" class="text-sm text-red-500 font-medium min-h-[20px] text-center"></div>
+                    
+                    <button onclick="verifyOTP()" id="verify-btn" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 transition-all">
+                        Verify & Access
+                    </button>
+
+                    <button onclick="showLogin()" class="w-full text-slate-400 text-sm hover:text-slate-600 py-2">
+                        ← Re-enter credentials
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="max-w-5xl mx-auto px-4 pt-8">
-        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-            <div>
-                <h1 class="text-3xl font-extrabold text-gray-900">Library Control Center</h1>
-                <p class="text-gray-500">Authorized Session Active</p>
-            </div>
-            <div class="flex gap-2">
-                <a href="index.html" class="px-5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center gap-2 shadow-sm">
-                    <i data-lucide="home" class="w-4 h-4 text-blue-600"></i>
-                    Go to Home Page
-                </a>
-            </div>
-        </header>
-
-        <!-- Navigation Tabs -->
-        <div class="grid grid-cols-3 gap-2 mb-8 bg-gray-200/50 p-1 rounded-xl shadow-inner">
-            <button onclick="showTab('books-section')" id="btn-books" class="tab-btn active py-3 rounded-lg font-bold text-gray-600 flex items-center justify-center transition-all text-sm sm:text-base">
-                <i data-lucide="book-plus" class="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2"></i> Books
-            </button>
-            <button onclick="showTab('events-section')" id="btn-events" class="tab-btn py-3 rounded-lg font-bold text-gray-600 flex items-center justify-center transition-all text-sm sm:text-base">
-                <i data-lucide="calendar-plus" class="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2"></i> Events
-            </button>
-            <button onclick="showTab('reader-section')" id="btn-reader" class="tab-btn py-3 rounded-lg font-bold text-gray-600 flex items-center justify-center transition-all text-sm sm:text-base">
-                <i data-lucide="award" class="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2"></i> Reader
-            </button>
-        </div>
-
-        <!-- BOOKS TAB -->
-        <div id="books-section" class="tab-content active space-y-8">
-            <section class="bg-white rounded-2xl shadow-sm border p-6">
-                <h2 class="text-xl font-bold mb-6 text-blue-600 flex items-center">
-                    <i data-lucide="plus-circle" class="w-5 h-5 mr-2"></i> Add New Arrival
-                </h2>
-                <form id="book-form" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <input type="text" id="b-title" placeholder="Book Title" class="p-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500" required>
-                    <input type="text" id="b-author" placeholder="Author" class="p-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500" required>
-                    <input type="text" id="b-genre" placeholder="Genre" class="p-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Cover Image</label>
-                        <input type="file" id="b-file" accept="image/*" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                    </div>
-                    <textarea id="b-desc" rows="3" placeholder="Description..." class="p-3 bg-gray-50 border rounded-xl outline-none md:col-span-2 focus:ring-2 focus:ring-blue-500"></textarea>
-                    <button type="submit" id="b-submit" class="md:col-span-2 bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 transition">Save Arrival</button>
-                </form>
-            </section>
-            <section class="bg-white rounded-2xl shadow-sm border overflow-hidden">
-                <div class="p-6 border-b bg-gray-50/50 flex justify-between items-center">
-                    <h2 class="text-xl font-bold text-gray-800">Manage Books</h2>
-                    <span id="book-count" class="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">0 Books</span>
+    <!-- App Dashboard (Hidden by default) -->
+    <div id="main-app" class="hidden">
+        <nav class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-40">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-emerald-600 rounded flex items-center justify-center">
+                    <i data-lucide="book-open" class="text-white w-4 h-4"></i>
                 </div>
-                <div id="books-list" class="max-h-[500px] overflow-y-auto custom-scrollbar divide-y"></div>
-            </section>
-        </div>
+                <span class="font-bold">Library Admin</span>
+            </div>
+            <button onclick="signOut()" class="text-slate-400 hover:text-red-500 transition-all">
+                <i data-lucide="log-out" class="w-5 h-5"></i>
+            </button>
+        </nav>
 
-        <!-- EVENTS TAB -->
-        <div id="events-section" class="tab-content space-y-8">
-            <section class="bg-white rounded-2xl shadow-sm border p-6">
-                <h2 class="text-xl font-bold mb-6 text-purple-600 flex items-center">
-                    <i data-lucide="calendar" class="w-5 h-5 mr-2"></i> New Event
-                </h2>
-                <form id="event-form" class="space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <input type="text" id="e-title" placeholder="Event Title" class="p-3 bg-gray-50 border rounded-xl outline-none" required>
-                        <input type="file" id="e-file" accept="image/*" class="w-full text-xs text-gray-500">
+        <main class="max-w-4xl mx-auto p-6">
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm h-fit">
+                    <h2 class="font-bold mb-4">Add Book</h2>
+                    <div class="space-y-3">
+                        <input type="text" id="book-title" placeholder="Title" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-emerald-500">
+                        <input type="text" id="book-author" placeholder="Author" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-emerald-500">
+                        <button onclick="addBook()" class="w-full bg-emerald-600 text-white py-2 rounded-lg font-bold">Save Book</button>
                     </div>
-                    <input type="date" id="e-date" class="w-full p-3 bg-gray-50 border rounded-xl outline-none" required>
-                    <textarea id="e-desc" rows="3" placeholder="Event details..." class="w-full p-3 bg-gray-50 border rounded-xl outline-none"></textarea>
-                    <button type="submit" id="e-submit" class="w-full bg-purple-600 text-white py-4 rounded-xl font-bold">Create Event</button>
-                </form>
-            </section>
-            <section class="bg-white rounded-2xl shadow-sm border overflow-hidden">
-                <div class="p-6 border-b bg-gray-50/50 flex justify-between items-center">
-                    <h2 class="text-xl font-bold text-gray-800">Manage Events</h2>
-                    <span id="event-count" class="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded-full">0 Events</span>
                 </div>
-                <div id="events-list" class="max-h-[500px] overflow-y-auto custom-scrollbar divide-y"></div>
-            </section>
-        </div>
 
-        <!-- READER TAB -->
-        <div id="reader-section" class="tab-content space-y-8">
-            <section class="bg-white rounded-2xl shadow-sm border p-6 text-center">
-                <h2 class="text-xl font-bold mb-6 text-orange-600">Update Reader of the Month</h2>
-                <form id="reader-form" class="space-y-4 max-w-lg mx-auto">
-                    <input type="text" id="r-name" placeholder="Student Name" class="w-full p-3 bg-gray-50 border rounded-xl" required>
-                    <input type="text" id="r-class" placeholder="Class/Section" class="w-full p-3 bg-gray-50 border rounded-xl" required>
-                    <input type="text" id="r-month" placeholder="Month Label" class="w-full p-3 bg-gray-50 border rounded-xl" required>
-                    <div class="p-4 border-2 border-dashed rounded-xl flex flex-col items-center">
-                        <img id="r-preview" src="https://placehold.co/200x200?text=Photo" class="w-24 h-24 rounded-full mb-2 object-cover">
-                        <input type="file" id="r-file" accept="image/*" class="hidden" onchange="previewReaderImage(this)">
-                        <button type="button" onclick="document.getElementById('r-file').click()" class="text-orange-600 font-bold">Select Photo</button>
+                <div class="md:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="p-4 border-b border-slate-100 flex justify-between items-center">
+                        <h2 class="font-bold">Inventory</h2>
+                        <i data-lucide="refresh-cw" class="w-4 h-4 text-slate-300 cursor-pointer" onclick="fetchBooks()"></i>
                     </div>
-                    <button type="submit" id="r-submit" class="w-full bg-orange-500 text-white py-4 rounded-xl font-bold">Update Reader</button>
-                </form>
-            </section>
-        </div>
+                    <div id="books-container" class="divide-y divide-slate-100">
+                        <!-- Content loaded via JS -->
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://oizvyuciltowiospwaob.supabase.co'; 
-        const SUPABASE_ANON_KEY = 'sb_publishable_QeoS6bMi2XcGSEstKng22w_PjySmNUx';
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const SUPABASE_URL = "https://oizvyuciltowiospwaob.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_QeoS6bMi2XcGSEstKng22w_PjySmNUx";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        async function checkPin() {
-            const pinInput = document.getElementById('admin-pin');
-            const enteredPin = pinInput.value;
+        // --- OTP UI Logic ---
+        function moveFocus(el, index) {
+            if (el.value.length === 1 && index < 5) {
+                document.querySelectorAll('.otp-digit')[index + 1].focus();
+            }
+        }
+
+        function handleDelete(e, index) {
+            if (e.key === "Backspace" && !e.target.value && index > 0) {
+                document.querySelectorAll('.otp-digit')[index - 1].focus();
+            }
+        }
+
+        function getFullOTP() {
+            let code = "";
+            document.querySelectorAll('.otp-digit').forEach(input => code += input.value);
+            return code;
+        }
+
+        // --- Auth Logic ---
+        async function requestOTP() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('pass-field').value;
+            const msg = document.getElementById('auth-msg');
             const btn = document.getElementById('login-btn');
-            const status = document.getElementById('auth-status');
-            const iconContainer = document.getElementById('auth-icon-container');
-            const card = document.getElementById('auth-card');
-            
-            if (!enteredPin) return;
+
+            if (!email || !password) {
+                msg.innerText = "Provide email and password.";
+                return;
+            }
 
             btn.disabled = true;
-            btn.innerText = 'Verifying...';
-            
-            try {
-                // Verify against the 'admin_auth' table (column 'password')
-                const { data, error } = await supabaseClient
-                    .from('admin_auth')
-                    .select('password')
-                    .eq('password', enteredPin)
-                    .maybeSingle();
+            msg.innerText = "Verifying...";
 
-                if (data && data.password === enteredPin) {
-                    // Success logic
-                    status.innerText = "Access Granted. Initializing...";
-                    status.classList.replace('text-gray-500', 'text-green-600');
-                    iconContainer.classList.replace('bg-blue-100', 'bg-green-100');
-                    document.getElementById('auth-icon').classList.replace('text-blue-600', 'text-green-600');
-                    
-                    setTimeout(() => {
-                        document.getElementById('admin-auth-overlay').classList.add('hidden');
-                        initApp();
-                    }, 800);
-                } else {
-                    // Fail logic: Shake UI then Redirect to main page
-                    card.classList.add('shake');
-                    status.innerText = "Invalid PIN. Redirecting to home...";
-                    status.classList.replace('text-gray-500', 'text-red-600');
-                    iconContainer.classList.replace('bg-blue-100', 'bg-red-100');
-                    document.getElementById('auth-icon').classList.replace('text-blue-600', 'text-red-600');
-                    pinInput.classList.replace('border-gray-100', 'border-red-200');
-                    
-                    setTimeout(() => {
-                        window.location.href = 'index.html';
-                    }, 1500);
-                }
-            } catch (err) {
-                console.error(err);
-                alert("Database connection failed.");
+            // 1. Verify password first
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+            if (error) {
+                msg.innerText = "Error: " + error.message;
                 btn.disabled = false;
-                btn.innerText = 'Unlock Dashboard';
-            }
-        }
-
-        // Add Enter key support for login
-        document.getElementById('admin-pin').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') checkPin();
-        });
-
-        function initApp() {
-            fetchBooks(); 
-            fetchEvents();
-            fetchCurrentReader();
-            lucide.createIcons();
-        }
-
-        function showTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            document.getElementById('btn-' + tabId.split('-')[0]).classList.add('active');
-        }
-
-        async function uploadImage(file) {
-            if (!file) return null;
-            const fileName = `${Date.now()}-${file.name.replace(/\s/g, '_')}`;
-            const { data, error } = await supabaseClient.storage.from('library-images').upload(fileName, file);
-            if (error) return null;
-            return supabaseClient.storage.from('library-images').getPublicUrl(fileName).data.publicUrl;
-        }
-
-        function previewReaderImage(input) {
-            if (input.files?.[0]) {
-                const reader = new FileReader();
-                reader.onload = e => document.getElementById('r-preview').src = e.target.result;
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
-
-        async function fetchBooks() {
-            const { data } = await supabaseClient.from('books').select('*').order('created_at', {ascending: false});
-            document.getElementById('book-count').innerText = `${data?.length || 0} Books`;
-            document.getElementById('books-list').innerHTML = data?.map(b => `
-                <div class="p-4 flex items-center justify-between">
-                    <div class="flex items-center gap-4">
-                        <img src="${b.cover_url || 'https://placehold.co/40x60'}" class="w-10 h-14 object-cover rounded shadow-sm">
-                        <div><p class="font-bold">${b.title}</p><p class="text-xs text-gray-500">${b.author}</p></div>
-                    </div>
-                    <button onclick="deleteItem('books', '${b.id}', '${b.title.replace(/'/g, "\\'")}')" class="text-gray-300 hover:text-red-600 p-2 transition-colors">
-                        <i data-lucide="trash-2" class="w-5 h-5"></i>
-                    </button>
-                </div>
-            `).join('') || '<div class="p-10 text-center text-gray-400">No books found.</div>';
-            lucide.createIcons();
-        }
-
-        async function fetchEvents() {
-            const { data } = await supabaseClient.from('events').select('*').order('event_date', {ascending: true});
-            document.getElementById('event-count').innerText = `${data?.length || 0} Events`;
-            document.getElementById('events-list').innerHTML = data?.map(e => `
-                <div class="p-4 flex items-center justify-between">
-                    <div><p class="font-bold">${e.title}</p><p class="text-xs text-purple-600 font-semibold">${e.event_date}</p></div>
-                    <button onclick="deleteItem('events', '${e.id}', '${e.title.replace(/'/g, "\\'")}')" class="text-gray-300 hover:text-red-600 p-2 transition-colors">
-                        <i data-lucide="trash-2" class="w-5 h-5"></i>
-                    </button>
-                </div>
-            `).join('') || '<div class="p-10 text-center text-gray-400">No events found.</div>';
-            lucide.createIcons();
-        }
-
-        async function fetchCurrentReader() {
-            const { data } = await supabaseClient.from('reader_of_the_month').select('*').eq('id', 'current').maybeSingle();
-            if (data) {
-                document.getElementById('r-name').value = data.name;
-                document.getElementById('r-class').value = data.class_section;
-                document.getElementById('r-month').value = data.month_year;
-                if (data.image_url) document.getElementById('r-preview').src = data.image_url;
-            }
-        }
-
-        document.getElementById('book-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('b-submit');
-            btn.disabled = true; btn.innerText = 'Saving...';
-            try {
-                const url = await uploadImage(document.getElementById('b-file').files[0]);
-                await supabaseClient.from('books').insert([{
-                    title: document.getElementById('b-title').value,
-                    author: document.getElementById('b-author').value,
-                    genre: document.getElementById('b-genre').value,
-                    cover_url: url,
-                    description: document.getElementById('b-desc').value
-                }]);
-                e.target.reset(); fetchBooks();
-            } catch(err) { alert("Error saving book."); }
-            finally { btn.disabled = false; btn.innerText = 'Save Arrival'; }
-        };
-
-        document.getElementById('event-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('e-submit');
-            btn.disabled = true; btn.innerText = 'Creating...';
-            try {
-                const url = await uploadImage(document.getElementById('e-file').files[0]);
-                await supabaseClient.from('events').insert([{
-                    title: document.getElementById('e-title').value,
-                    event_date: document.getElementById('e-date').value,
-                    image_url: url,
-                    description: document.getElementById('e-desc').value
-                }]);
-                e.target.reset(); fetchEvents();
-            } catch(err) { alert("Error saving event."); }
-            finally { btn.disabled = false; btn.innerText = 'Create Event'; }
-        };
-
-        document.getElementById('reader-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('r-submit');
-            btn.disabled = true; btn.innerText = 'Updating...';
-            try {
-                let url = document.getElementById('r-preview').src;
-                const file = document.getElementById('r-file').files[0];
-                if (file) url = await uploadImage(file);
-                await supabaseClient.from('reader_of_the_month').upsert({
-                    id: 'current',
-                    name: document.getElementById('r-name').value,
-                    class_section: document.getElementById('r-class').value,
-                    month_year: document.getElementById('r-month').value,
-                    image_url: url
+            } else {
+                // 2. Request the 6-digit OTP
+                const { error: otpErr } = await supabaseClient.auth.signInWithOtp({ 
+                    email: email,
+                    options: { shouldCreateUser: false }
                 });
-                alert("Reader profile updated!");
-            } catch(err) { alert("Error updating reader."); }
-            finally { btn.disabled = false; btn.innerText = 'Update Reader'; }
-        };
 
-        window.deleteItem = async (table, id, title) => {
-            if(confirm(`Are you sure you want to delete "${title}"?`)) {
-                await supabaseClient.from(table).delete().eq('id', id);
-                table === 'books' ? fetchBooks() : fetchEvents();
+                if (otpErr) {
+                    msg.innerText = "OTP Error: " + otpErr.message;
+                    btn.disabled = false;
+                } else {
+                    document.getElementById('step-login').classList.add('hidden');
+                    document.getElementById('step-otp').classList.remove('hidden');
+                    document.querySelectorAll('.otp-digit')[0].focus();
+                }
             }
         }
 
-        window.onload = () => lucide.createIcons();
+        async function verifyOTP() {
+            const email = document.getElementById('email').value;
+            const token = getFullOTP();
+            const msg = document.getElementById('otp-msg');
+            
+            if (token.length < 6) {
+                msg.innerText = "Enter all 6 digits.";
+                return;
+            }
+
+            const { data, error } = await supabaseClient.auth.verifyOtp({
+                email: email,
+                token: token,
+                type: 'email'
+            });
+
+            if (error) {
+                msg.innerText = "Invalid code. Try again.";
+            } else {
+                checkUser();
+            }
+        }
+
+        async function checkUser() {
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            if (user) {
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+                fetchBooks();
+            }
+        }
+
+        function showLogin() {
+            document.getElementById('step-otp').classList.add('hidden');
+            document.getElementById('step-login').classList.remove('hidden');
+            document.getElementById('login-btn').disabled = false;
+        }
+
+        async function signOut() {
+            await supabaseClient.auth.signOut();
+            location.reload();
+        }
+
+        // --- Data Logic ---
+        async function fetchBooks() {
+            const container = document.getElementById('books-container');
+            const { data, error } = await supabaseClient.from('books').select('*').order('created_at', { ascending: false });
+            
+            if (error) return;
+            
+            container.innerHTML = data.map(book => `
+                <div class="p-4 flex justify-between items-center">
+                    <div>
+                        <div class="font-bold text-sm">${book.title}</div>
+                        <div class="text-xs text-slate-400">${book.author}</div>
+                    </div>
+                    <button onclick="deleteBook(${book.id})" class="text-slate-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        async function addBook() {
+            const title = document.getElementById('book-title').value;
+            const author = document.getElementById('book-author').value;
+            if (!title || !author) return;
+
+            const { error } = await supabaseClient.from('books').insert([{ title, author }]);
+            if (!error) {
+                document.getElementById('book-title').value = '';
+                document.getElementById('book-author').value = '';
+                fetchBooks();
+            }
+        }
+
+        async function deleteBook(id) {
+            await supabaseClient.from('books').delete().eq('id', id);
+            fetchBooks();
+        }
+
+        checkUser();
+        lucide.createIcons();
     </script>
 </body>
 </html>
