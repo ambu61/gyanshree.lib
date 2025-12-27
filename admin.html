@@ -19,7 +19,6 @@
 </head>
 <body class="bg-[#f8fafc] text-slate-900">
 
-    <!-- Auth Guard Overlay -->
     <div id="auth-overlay" class="fixed inset-0 z-[100] bg-slate-900 flex items-center justify-center p-4">
         <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-md w-full">
             <div class="text-center mb-8">
@@ -38,7 +37,6 @@
     </div>
 
     <div class="flex min-h-screen">
-        <!-- Sidebar -->
         <aside class="w-64 bg-white border-r hidden lg:flex flex-col sticky top-0 h-screen">
             <div class="p-6 border-b">
                 <h1 class="font-bold text-xl">Library Admin</h1>
@@ -62,10 +60,8 @@
             </div>
         </aside>
 
-        <!-- Main Content -->
         <main class="flex-1 p-8 lg:p-12">
             
-            <!-- Manage Books Tab -->
             <section id="tab-books" class="admin-tab active">
                 <div class="flex justify-between items-center mb-8">
                     <h2 class="text-3xl font-bold tracking-tight">Manage New Arrivals</h2>
@@ -74,11 +70,9 @@
                     </button>
                 </div>
                 <div id="books-list" class="grid gap-4">
-                    <!-- Dynamic Book List -->
-                </div>
+                    </div>
             </section>
 
-            <!-- Library Events Tab -->
             <section id="tab-events" class="admin-tab">
                 <div class="flex justify-between items-center mb-8">
                     <h2 class="text-3xl font-bold tracking-tight">Manage Events</h2>
@@ -87,11 +81,9 @@
                     </button>
                 </div>
                 <div id="events-list" class="grid gap-4">
-                    <!-- Dynamic Event List -->
-                </div>
+                    </div>
             </section>
 
-            <!-- Reader Tab -->
             <section id="tab-reader" class="admin-tab">
                 <h2 class="text-3xl font-bold tracking-tight mb-8">Update Reader of the Month</h2>
                 <div class="max-w-xl bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
@@ -125,7 +117,7 @@
                                 </div>
                             </div>
                         </div>
-                        <button onclick="updateReader()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-all">Update Spotlight</button>
+                        <button onclick="updateReader()" id="rotm-save-btn" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-all">Update Spotlight</button>
                     </div>
                 </div>
             </section>
@@ -133,7 +125,6 @@
         </main>
     </div>
 
-    <!-- Generic Modal for Add/Edit -->
     <div id="form-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-[200] backdrop-blur-sm">
         <div class="bg-white w-full max-w-lg rounded-3xl p-8 shadow-2xl animate-in zoom-in-95 duration-200">
             <div class="flex justify-between items-center mb-6">
@@ -143,8 +134,7 @@
             <form id="entry-form" class="space-y-4">
                 <input type="hidden" id="entry-type">
                 <div id="form-fields" class="space-y-4">
-                    <!-- Fields injected based on type -->
-                </div>
+                    </div>
                 <button type="submit" id="save-btn" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-all mt-4">Save Entry</button>
             </form>
         </div>
@@ -153,6 +143,7 @@
     <script>
         const SUPABASE_URL = 'https://oizvyuciltowiospwaob.supabase.co'; 
         const SUPABASE_ANON_KEY = 'sb_publishable_QeoS6bMi2XcGSEstKng22w_PjySmNUx';
+        const BUCKET_NAME = 'library-images'; // Updated bucket name
         
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -188,32 +179,37 @@
             }
         }
 
-        // Image Upload Logic
+        // Updated Image Upload Logic
         async function uploadImage(event, targetInputId, previewId) {
             const file = event.target.files[0];
             if (!file) return;
 
             const previewEl = document.getElementById(previewId);
             const saveBtn = document.getElementById('save-btn');
+            const rotmBtn = document.getElementById('rotm-save-btn');
+            
             if (previewEl) previewEl.classList.add('upload-loading');
             if (saveBtn) saveBtn.disabled = true;
+            if (rotmBtn) rotmBtn.disabled = true;
 
             const fileExt = file.name.split('.').pop();
-            const fileName = `${Math.random()}.${fileExt}`;
+            const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
             const filePath = `${fileName}`;
 
             const { data, error } = await supabaseClient.storage
-                .from('library-assets') // Make sure this bucket is public in Supabase
+                .from(BUCKET_NAME) 
                 .upload(filePath, file);
 
             if (error) {
                 alert("Upload failed: " + error.message);
                 if (previewEl) previewEl.classList.remove('upload-loading');
+                if (saveBtn) saveBtn.disabled = false;
+                if (rotmBtn) rotmBtn.disabled = false;
                 return;
             }
 
             const { data: { publicUrl } } = supabaseClient.storage
-                .from('library-assets')
+                .from(BUCKET_NAME)
                 .getPublicUrl(filePath);
 
             document.getElementById(targetInputId).value = publicUrl;
@@ -223,6 +219,7 @@
                 previewEl.innerHTML = `<img src="${publicUrl}" class="w-full h-full object-cover">`;
             }
             if (saveBtn) saveBtn.disabled = false;
+            if (rotmBtn) rotmBtn.disabled = false;
         }
 
         function switchTab(tab) {
@@ -237,9 +234,11 @@
         }
 
         async function refreshData() {
-            const currentTab = document.querySelector('.admin-tab.active').id;
+            const activeTab = document.querySelector('.admin-tab.active');
+            if (!activeTab) return;
+            const currentTabId = activeTab.id;
             
-            if (currentTab === 'tab-books') {
+            if (currentTabId === 'tab-books') {
                 const { data } = await supabaseClient.from('books').select('*').order('created_at', {ascending: false});
                 const list = document.getElementById('books-list');
                 list.innerHTML = (data || []).map(b => `
@@ -256,7 +255,7 @@
                 `).join('');
             }
 
-            if (currentTab === 'tab-events') {
+            if (currentTabId === 'tab-events') {
                 const { data } = await supabaseClient.from('events').select('*').order('event_date', {ascending: true});
                 const list = document.getElementById('events-list');
                 list.innerHTML = (data || []).map(e => `
@@ -270,14 +269,16 @@
                 `).join('');
             }
 
-            if (currentTab === 'tab-reader') {
-                const { data } = await supabaseClient.from('reader_of_the_month').select('*').eq('id', 'current').single();
+            if (currentTabId === 'tab-reader') {
+                const { data, error } = await supabaseClient.from('reader_of_the_month').select('*').eq('id', 'current').single();
                 if (data) {
-                    document.getElementById('rotm-name').value = data.name;
-                    document.getElementById('rotm-class').value = data.class_section;
-                    document.getElementById('rotm-period').value = data.month_year;
-                    document.getElementById('rotm-url').value = data.image_url;
-                    document.getElementById('rotm-preview').innerHTML = `<img src="${data.image_url}" class="w-full h-full object-cover">`;
+                    document.getElementById('rotm-name').value = data.name || '';
+                    document.getElementById('rotm-class').value = data.class_section || '';
+                    document.getElementById('rotm-period').value = data.month_year || '';
+                    document.getElementById('rotm-url').value = data.image_url || '';
+                    if (data.image_url) {
+                        document.getElementById('rotm-preview').innerHTML = `<img src="${data.image_url}" class="w-full h-full object-cover">`;
+                    }
                 }
             }
             lucide.createIcons();
