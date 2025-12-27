@@ -82,11 +82,17 @@
         <section class="py-12 sm:py-20 bg-white">
             <div class="container mx-auto px-4 text-center max-w-5xl">
                 <h2 class="text-4xl font-extrabold text-gray-800 mb-6">About the Senior Library</h2>
-                <p class="text-xl sm:text-2xl text-gray-600 leading-relaxed">A state-of-the-art resource center designed for academic and intellectual growth.</p>
+                <p class="text-xl sm:text-2xl text-gray-600 leading-relaxed mb-8">A state-of-the-art resource center designed for academic and intellectual growth.</p>
+                
+                <div class="bg-blue-50 p-8 rounded-2xl border border-blue-100 shadow-sm">
+                    <p class="text-lg text-gray-700 leading-relaxed text-justify md:text-center">
+                        The Senior Library is an important part of our school. It is a place where senior students come to read, learn, and gain knowledge. The library helps students develop good reading habits and encourages them to explore subjects beyond their textbooks. It provides useful books and reference materials that support learning and research in a quiet and comfortable environment.
+                    </p>
+                </div>
             </div>
         </section>
 
-        <!-- Features Grid (Original Layout Maintained) -->
+        <!-- Features Grid -->
         <section class="bg-gray-200 py-12 sm:py-16">
             <div class="max-w-6xl mx-auto px-4">
                 <div id="resourceGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -207,17 +213,14 @@
             const modal = document.getElementById('reader-modal');
             const content = document.getElementById('modal-content');
             
-            // Show overlay first
             modal.classList.remove('hidden');
             
-            // Animate card in
             setTimeout(() => {
                 content.classList.remove('scale-90', 'opacity-0');
                 content.classList.add('scale-100', 'opacity-100');
             }, 50);
 
             try {
-                // Fetch latest reader from 'reader_of_the_month' table
                 const { data, error } = await supabaseClient
                     .from('reader_of_the_month')
                     .select('*')
@@ -233,7 +236,6 @@
                         document.getElementById('rom-image').src = reader.image_url;
                     }
                 } else {
-                    // Fallback UI if no data
                     document.getElementById('rom-name').innerText = "Keep Reading!";
                     document.getElementById('rom-month').innerText = "Coming Soon";
                     document.getElementById('rom-class').innerText = "Your name could be here!";
