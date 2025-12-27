@@ -3,285 +3,259 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Library Admin - Gyanshree</title>
+    <title>Senior Library (VI-XII) - Gyanshree School</title>
+    <!-- External Scripts: Tailwind for styling, Lucide for icons, and Supabase for data -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .upload-loading { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .slide { transition: opacity 1s ease-in-out; }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(0.9); opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        .pulse-effect { animation: pulse-ring 1.5s infinite; }
+
+        .construction-ribbon {
+            position: absolute;
+            top: 10px;
+            right: -25px;
+            padding: 2px 25px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background-color: #ef4444;
+            color: white;
+            transform: rotate(45deg);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            z-index: 20;
+        }
+
+        /* Modal specific styles */
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+        }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen">
+<body class="bg-gray-100 flex flex-col min-h-screen">
 
-    <!-- Navigation -->
-    <nav class="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="bg-blue-600 p-2 rounded-xl text-white">
-                    <i data-lucide="shield-check" class="w-5 h-5"></i>
-                </div>
-                <h1 class="font-bold text-lg tracking-tight">Library Admin Panel</h1>
+    <header class="bg-white shadow-md">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-20">
+            <div class="flex items-center">
+                <a href="index.html" class="flex items-center">
+                    <img src="https://www.gyanshree.in/site/assets/images/gyan-logo.jpg" 
+                         onerror="this.onerror=null;this.src='https://placehold.co/50x50/3c82f6/ffffff?text=GS';" 
+                         alt="Gyanshree School Logo" class="w-12 h-12 object-contain rounded-lg">
+                    <span class="ml-3 text-2xl font-bold text-gray-800 hidden sm:block">Gyanshree School</span>
+                </a>
             </div>
-            <a href="index.html" class="text-slate-500 hover:text-blue-600 font-medium text-sm flex items-center gap-2 transition-colors">
-                <i data-lucide="external-link" class="w-4 h-4"></i> View Main Site
-            </a>
+            <div class="hidden md:flex items-center space-x-6">
+                <a href="index.html" class="text-blue-600 font-semibold transition-colors border-b-2 border-blue-600">HOME</a>
+                <a href="credits.html" class="text-gray-600 hover:text-blue-600 transition-colors">CREDITS</a>
+                <a href="mailto:info@gyanshree.in" class="text-gray-600 hover:text-blue-600 transition-colors">CONTACT</a>
+            </div>
+            <div class="md:hidden">
+                <i data-lucide="menu" class="w-6 h-6 text-gray-600 cursor-pointer"></i>
+            </div>
+        </nav>
+    </header>
+
+    <main class="flex-grow">
+        <!-- Hero Carousel -->
+        <div id="slider" class="relative w-full h-[300px] sm:h-[400px] lg:h-[550px] overflow-hidden bg-gray-900">
+            <div class="slide absolute inset-0 w-full h-full opacity-100">
+                <img src="IMG_8939.jpg" alt="Library Desk" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='https://placehold.co/800x400/38bdf8/ffffff?text=Desk';">
+            </div>
+            <div class="slide absolute inset-0 w-full h-full opacity-0">
+                <img src="IMG_8940.jpg" alt="Library Shelves" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='https://placehold.co/800x400/3b82f6/ffffff?text=Shelving';">
+            </div>
+            <button id="prevBtn" class="absolute left-4 top-1/2 -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 z-10"><i data-lucide="chevron-left"></i></button>
+            <button id="nextBtn" class="absolute right-4 top-1/2 -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 z-10"><i data-lucide="chevron-right"></i></button>
+            <div id="dotsContainer" class="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2 z-10"></div>
         </div>
-    </nav>
 
-    <main class="max-w-4xl mx-auto px-6 py-10 space-y-12">
-        
-        <!-- SECTION 1: READER OF THE MONTH -->
-        <section id="reader-section" class="space-y-6">
-            <div class="flex items-center gap-3">
-                <div class="bg-amber-100 p-2 rounded-lg text-amber-600">
-                    <i data-lucide="star" class="w-6 h-6"></i>
-                </div>
-                <h2 class="text-2xl font-bold">Reader of the Month</h2>
-            </div>
-
-            <div class="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-200">
-                <form id="rotm-form" class="space-y-6">
-                    <div class="grid md:grid-cols-2 gap-6">
-                        <div class="space-y-2">
-                            <label class="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Student Name</label>
-                            <input type="text" id="rotm-name" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-50 outline-none transition-all" placeholder="Enter full name">
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Class & Section</label>
-                            <input type="text" id="rotm-class" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-50 outline-none transition-all" placeholder="e.g. 10-A">
-                        </div>
-                    </div>
-
-                    <div class="grid md:grid-cols-2 gap-6">
-                        <div class="space-y-2">
-                            <label class="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Month & Year</label>
-                            <input type="text" id="rotm-period" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-50 outline-none transition-all" placeholder="e.g. January 2025">
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Student Photo</label>
-                            <div class="flex gap-2">
-                                <input type="url" id="rotm-url" required class="flex-1 px-5 py-3.5 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-50 outline-none transition-all text-sm" placeholder="Paste URL or use Upload ->">
-                                <label class="cursor-pointer bg-slate-100 hover:bg-slate-200 px-4 py-3.5 rounded-2xl border border-slate-200 transition-colors flex items-center justify-center min-w-[56px]">
-                                    <input type="file" class="hidden" accept="image/*" onchange="handleFileUpload(this, 'rotm-url')">
-                                    <i data-lucide="upload" class="w-5 h-5 text-slate-600"></i>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl hover:bg-blue-700 transition shadow-lg shadow-blue-100 flex items-center justify-center gap-2">
-                        <i data-lucide="check-circle" class="w-5 h-5"></i> Update Featured Reader
-                    </button>
-                </form>
-            </div>
-        </section>
-
-        <!-- SECTION 2: NEW ARRIVALS -->
-        <section id="books-section" class="space-y-6">
-            <div class="flex items-center gap-3">
-                <div class="bg-indigo-100 p-2 rounded-lg text-indigo-600">
-                    <i data-lucide="book-plus" class="w-6 h-6"></i>
-                </div>
-                <h2 class="text-2xl font-bold">Manage New Arrivals</h2>
-            </div>
-
-            <div class="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-200">
-                <form id="book-form" class="space-y-6">
-                    <div class="grid md:grid-cols-2 gap-6">
-                        <div class="space-y-2">
-                            <label class="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Book Title</label>
-                            <input type="text" id="book-title" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-50 outline-none transition-all" placeholder="Enter book title">
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Author</label>
-                            <input type="text" id="book-author" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-50 outline-none transition-all" placeholder="Author name">
-                        </div>
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Book Cover Image</label>
-                        <div class="flex gap-2">
-                            <input type="url" id="book-cover" required class="flex-1 px-5 py-3.5 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-50 outline-none transition-all text-sm" placeholder="Paste URL or use Upload ->">
-                            <label class="cursor-pointer bg-slate-100 hover:bg-slate-200 px-4 py-3.5 rounded-2xl border border-slate-200 transition-colors flex items-center justify-center min-w-[56px]">
-                                <input type="file" class="hidden" accept="image/*" onchange="handleFileUpload(this, 'book-cover')">
-                                <i data-lucide="upload" class="w-5 h-5 text-slate-600"></i>
-                            </label>
-                        </div>
-                    </div>
-                    <button type="submit" class="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl hover:bg-slate-800 transition shadow-lg flex items-center justify-center gap-2">
-                        <i data-lucide="plus" class="w-5 h-5"></i> Add to New Arrivals
-                    </button>
-                </form>
-            </div>
-
-            <!-- List Card -->
-            <div class="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-200">
-                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4 ml-2">Current Collection</h3>
-                <div id="books-list" class="grid grid-cols-1 gap-3">
-                    <div class="animate-pulse flex space-x-4 p-4">
-                        <div class="rounded-lg bg-slate-100 h-16 w-12"></div>
-                        <div class="flex-1 space-y-3 py-1">
-                            <div class="h-2 bg-slate-100 rounded w-3/4"></div>
-                            <div class="h-2 bg-slate-100 rounded w-1/2"></div>
-                        </div>
-                    </div>
+        <section class="py-12 sm:py-20 bg-white">
+            <div class="container mx-auto px-4 text-center max-w-5xl">
+                <h2 class="text-4xl font-extrabold text-gray-800 mb-6">About the Senior Library</h2>
+                <p class="text-xl sm:text-2xl text-gray-600 leading-relaxed mb-8">A state-of-the-art resource center designed for academic and intellectual growth.</p>
+                
+                <div class="bg-blue-50 p-8 rounded-2xl border border-blue-100 shadow-sm">
+                    <p class="text-lg text-gray-700 leading-relaxed text-justify md:text-center">
+                        The Senior Library is an important part of our school. It is a place where senior students come to read, learn, and gain knowledge. The library helps students develop good reading habits and encourages them to explore subjects beyond their textbooks. It provides useful books and reference materials that support learning and research in a quiet and comfortable environment.
+                    </p>
                 </div>
             </div>
         </section>
 
+        <!-- Features Grid -->
+        <section class="bg-gray-200 py-12 sm:py-16">
+            <div class="max-w-6xl mx-auto px-4">
+                <div id="resourceGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    <a href="quiz.html" class="flex flex-col items-center justify-center text-center p-6 bg-teal-600 text-white rounded-lg shadow-md hover:bg-teal-700 h-40 transition">
+                        <i data-lucide="puzzle" class="w-10 h-10 mb-2"></i>
+                        <span class="font-semibold text-xl">Genre Quiz</span>
+                    </a>
+                    <div class="relative flex flex-col items-center justify-center text-center p-6 bg-cyan-700/60 text-white rounded-lg shadow-inner h-40 opacity-90 cursor-not-allowed">
+                        <i data-lucide="book-open-check" class="w-10 h-10 mb-2"></i>
+                        <span class="font-semibold text-xl">Book List</span>
+                        <div class="construction-ribbon">BETA</div>
+                    </div>
+                    <a href="new_arrivals.html" class="flex flex-col items-center justify-center text-center p-6 bg-sky-700 text-white rounded-lg shadow-md hover:bg-sky-800 h-40 transition">
+                        <i data-lucide="star" class="w-10 h-10 mb-2"></i>
+                        <span class="font-semibold text-xl">New Arrivals</span>
+                    </a>
+                    <a href="library_rules.html" class="flex flex-col items-center justify-center text-center p-6 bg-blue-700 text-white rounded-lg shadow-md hover:bg-blue-800 h-40 transition">
+                        <i data-lucide="clipboard-list" class="w-10 h-10 mb-2"></i>
+                        <span class="font-semibold text-xl">Library Rules</span>
+                    </a>
+                    <a href="events.html" class="relative flex flex-col items-center justify-center text-center p-6 bg-indigo-700 text-white rounded-lg shadow-md hover:bg-indigo-800 h-40 overflow-hidden transition">
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <div class="w-16 h-16 rounded-full bg-white/20 pulse-effect"></div>
+                        </div>
+                        <i data-lucide="trophy" class="w-10 h-10 mb-2 relative z-10"></i>
+                        <span class="font-semibold text-xl relative z-10">Events</span>
+                    </a>
+                    <a href="credits.html" class="flex flex-col items-center justify-center text-center p-6 bg-violet-700 text-white rounded-lg shadow-md hover:bg-violet-800 h-40 transition">
+                        <i data-lucide="help-circle" class="w-10 h-10 mb-2"></i>
+                        <span class="font-semibold text-xl">Credits</span>
+                    </a>
+                </div>
+            </div>
+        </section>
     </main>
 
-    <!-- Toast UI -->
-    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-full shadow-2xl transition-all opacity-0 translate-y-4 pointer-events-none z-[200] flex items-center gap-3">
-        <i data-lucide="info" id="toast-icon" class="w-5 h-5 text-blue-400"></i>
-        <span id="toast-text">Success!</span>
+    <!-- READER OF THE MONTH POPUP MODAL -->
+    <div id="reader-modal" class="fixed inset-0 z-[100] modal-overlay flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden relative transform transition-all scale-90 opacity-0 duration-500" id="modal-content">
+            <!-- Close Button -->
+            <button onclick="closeReaderModal()" class="absolute top-4 right-4 text-white/80 hover:text-white transition z-10">
+                <i data-lucide="x-circle" class="w-8 h-8"></i>
+            </button>
+            
+            <!-- Card Header -->
+            <div class="bg-gradient-to-br from-amber-400 to-orange-600 p-8 text-center text-white relative">
+                <div class="absolute top-0 right-0 p-4 opacity-20">
+                    <i data-lucide="award" class="w-24 h-24 rotate-12"></i>
+                </div>
+                <p id="rom-month" class="text-xs font-black uppercase tracking-[0.4em] mb-2 opacity-90">...</p>
+                <h2 class="text-3xl font-bold leading-tight">Reader of <br>the Month</h2>
+            </div>
+            
+            <!-- Card Body -->
+            <div class="p-8 text-center -mt-12">
+                <div class="relative inline-block mb-6">
+                    <div class="w-32 h-32 mx-auto rounded-full border-4 border-white p-1 overflow-hidden shadow-xl bg-gray-50">
+                        <img id="rom-image" src="https://placehold.co/200x200/f59e0b/ffffff?text=..." class="w-full h-full object-cover rounded-full">
+                    </div>
+                    <div class="absolute bottom-0 right-0 bg-amber-500 text-white p-2 rounded-full shadow-lg border-2 border-white">
+                        <i data-lucide="medal" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                
+                <h3 id="rom-name" class="text-2xl font-bold text-gray-800 mb-1 leading-tight">Loading...</h3>
+                <p id="rom-class" class="text-amber-600 font-semibold text-sm">Gyanshree Student</p>
+                
+                <div class="mt-8 pt-6 border-t border-gray-100">
+                    <button onclick="closeReaderModal()" class="w-full bg-gray-900 text-white font-bold py-3 rounded-xl hover:bg-gray-800 transition shadow-lg">Excellent!</button>
+                </div>
+            </div>
+        </div>
     </div>
 
+    <footer class="bg-gray-800 text-gray-400 py-8 mt-auto">
+        <div class="container mx-auto px-4 text-center text-sm">
+            <p>&copy; 2025 Gyanshree School, Noida. All Rights Reserved.</p>
+        </div>
+    </footer>
+
     <script>
-        const SUPABASE_URL = 'https://oizvyuciltowiospwaob.supabase.co';
+        // Supabase Client Configuration
+        const SUPABASE_URL = 'https://oizvyuciltowiospwaob.supabase.co'; 
         const SUPABASE_ANON_KEY = 'sb_publishable_QeoS6bMi2XcGSEstKng22w_PjySmNUx';
-        const IMGBB_API_KEY = '1f6c4296996847844005c21528629002'; // Free public API key for image hosting
-        
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        async function init() {
-            lucide.createIcons();
-            loadCurrentReader();
-            loadBooks();
-        }
-
-        // --- IMAGE UPLOAD LOGIC ---
-        async function handleFileUpload(input, targetInputId) {
-            const file = input.files[0];
-            if (!file) return;
-
-            const targetInput = document.getElementById(targetInputId);
-            const originalPlaceholder = targetInput.placeholder;
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof lucide !== 'undefined') lucide.createIcons();
             
-            targetInput.value = "";
-            targetInput.placeholder = "Uploading image...";
-            targetInput.classList.add('upload-loading');
-            showToast("Starting upload...", "loader");
+            // Carousel Logic
+            const slides = document.querySelectorAll('#slider .slide');
+            const dotsContainer = document.getElementById('dotsContainer');
+            let currentSlide = 0;
+
+            slides.forEach((_, index) => {
+                const dot = document.createElement('button');
+                dot.className = `w-3 h-3 rounded-full ${index === 0 ? 'bg-white' : 'bg-white/50'}`;
+                dot.onclick = () => showSlide(index);
+                dotsContainer.appendChild(dot);
+            });
+
+            function showSlide(n) {
+                currentSlide = (n + slides.length) % slides.length;
+                slides.forEach((s, i) => s.style.opacity = i === currentSlide ? '1' : '0');
+                const dots = dotsContainer.querySelectorAll('button');
+                dots.forEach((d, i) => d.className = `w-3 h-3 rounded-full ${i === currentSlide ? 'bg-white' : 'bg-white/50'}`);
+            }
+
+            document.getElementById('nextBtn').onclick = () => showSlide(currentSlide + 1);
+            document.getElementById('prevBtn').onclick = () => showSlide(currentSlide - 1);
+            setInterval(() => showSlide(currentSlide + 1), 5000);
+
+            // Auto-open Reader of the Month popup on load
+            setTimeout(openReaderModal, 1500); 
+        });
+
+        async function openReaderModal() {
+            const modal = document.getElementById('reader-modal');
+            const content = document.getElementById('modal-content');
+            
+            modal.classList.remove('hidden');
+            
+            setTimeout(() => {
+                content.classList.remove('scale-90', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 50);
 
             try {
-                const formData = new FormData();
-                formData.append('image', file);
-                
-                const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    targetInput.value = result.data.url;
-                    showToast("Image uploaded!", "check-circle");
+                const { data, error } = await supabaseClient
+                    .from('reader_of_the_month')
+                    .select('*')
+                    .order('updated_at', { ascending: false })
+                    .limit(1);
+
+                if (data && data[0]) {
+                    const reader = data[0];
+                    document.getElementById('rom-name').innerText = reader.name;
+                    document.getElementById('rom-month').innerText = reader.month_year || 'Current Month';
+                    document.getElementById('rom-class').innerText = reader.class_section || "Senior Student";
+                    if (reader.image_url) {
+                        document.getElementById('rom-image').src = reader.image_url;
+                    }
                 } else {
-                    throw new Error("Upload failed");
+                    document.getElementById('rom-name').innerText = "Keep Reading!";
+                    document.getElementById('rom-month').innerText = "Coming Soon";
+                    document.getElementById('rom-class').innerText = "Your name could be here!";
                 }
             } catch (err) {
-                console.error(err);
-                showToast("Upload failed. Please try again.", "alert-circle");
-            } finally {
-                targetInput.placeholder = originalPlaceholder;
-                targetInput.classList.remove('upload-loading');
+                console.error("Supabase Error:", err);
             }
         }
 
-        // --- DATA LOGIC ---
-        async function loadCurrentReader() {
-            const { data } = await supabaseClient.from('reader_of_the_month').select('*').eq('id', 'current').single();
-            if (data) {
-                document.getElementById('rotm-name').value = data.name;
-                document.getElementById('rotm-class').value = data.class_section;
-                document.getElementById('rotm-period').value = data.month_year;
-                document.getElementById('rotm-url').value = data.image_url;
-            }
-        }
-
-        document.getElementById('rotm-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const btn = e.target.querySelector('button');
-            btn.disabled = true;
-            btn.innerText = 'Updating...';
-
-            const { error } = await supabaseClient.from('reader_of_the_month').upsert({
-                id: 'current',
-                name: document.getElementById('rotm-name').value,
-                class_section: document.getElementById('rotm-class').value,
-                month_year: document.getElementById('rotm-period').value,
-                image_url: document.getElementById('rotm-url').value
-            });
-
-            btn.disabled = false;
-            btn.innerHTML = '<i data-lucide="check-circle" class="w-5 h-5"></i> Update Featured Reader';
-            lucide.createIcons();
-            showToast(error ? 'Error updating' : 'Reader of the Month updated!', "check-circle-2");
-        };
-
-        document.getElementById('book-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const { error } = await supabaseClient.from('books').insert({
-                title: document.getElementById('book-title').value,
-                author: document.getElementById('book-author').value,
-                cover_url: document.getElementById('book-cover').value
-            });
-            if (!error) {
-                e.target.reset();
-                loadBooks();
-                showToast('Book added successfully!', "check-circle-2");
-            }
-        };
-
-        async function loadBooks() {
-            const { data } = await supabaseClient.from('books').select('*').order('created_at', {ascending: false});
-            const list = document.getElementById('books-list');
+        function closeReaderModal() {
+            const modal = document.getElementById('reader-modal');
+            const content = document.getElementById('modal-content');
             
-            if (!data || data.length === 0) {
-                list.innerHTML = `<div class="p-8 text-center text-slate-400 italic">No books in the collection yet.</div>`;
-                return;
-            }
-
-            list.innerHTML = data.map(book => `
-                <div class="group bg-slate-50 hover:bg-white p-4 rounded-2xl flex items-center justify-between border border-transparent hover:border-slate-200 transition-all">
-                    <div class="flex items-center gap-4">
-                        <img src="${book.cover_url}" class="w-10 h-14 object-cover rounded-lg shadow-sm">
-                        <div>
-                            <h4 class="font-bold text-slate-800 leading-tight">${book.title}</h4>
-                            <p class="text-xs text-slate-500 mt-0.5">${book.author}</p>
-                        </div>
-                    </div>
-                    <button onclick="deleteBook('${book.id}')" class="text-slate-300 hover:text-red-500 p-2 transition-colors">
-                        <i data-lucide="trash-2" class="w-5 h-5"></i>
-                    </button>
-                </div>
-            `).join('');
-            lucide.createIcons();
-        }
-
-        async function deleteBook(id) {
-            if (confirm('Are you sure you want to remove this book?')) {
-                await supabaseClient.from('books').delete().eq('id', id);
-                loadBooks();
-                showToast('Book removed', "trash-2");
-            }
-        }
-
-        function showToast(msg, iconName = "info") {
-            const t = document.getElementById('toast');
-            const icon = document.getElementById('toast-icon');
-            document.getElementById('toast-text').innerText = msg;
-            icon.setAttribute('data-lucide', iconName);
-            lucide.createIcons();
+            content.classList.add('scale-90', 'opacity-0');
+            content.classList.remove('scale-100', 'opacity-100');
             
-            t.classList.remove('opacity-0', 'translate-y-4');
-            setTimeout(() => t.classList.add('opacity-0', 'translate-y-4'), 3000);
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 500);
         }
-
-        window.onload = init;
     </script>
 </body>
 </html>
