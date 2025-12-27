@@ -3,291 +3,379 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure Library Admin</title>
+    <title>Library Admin | Gyanshree</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .loader { border-top-color: #10b981; animation: spinner 0.6s linear infinite; }
-        @keyframes spinner { to { transform: rotate(360deg); } }
-        
-        /* Grid styling for 6-digit OTP */
-        .otp-container {
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 10px;
-        }
-        .otp-digit {
-            width: 100%;
-            height: 60px;
-            text-align: center;
-            font-size: 1.5rem;
-            font-weight: 700;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            background: #f8fafc;
-            outline: none;
-            transition: all 0.2s;
-        }
-        .otp-digit:focus {
-            border-color: #10b981;
-            background: #fff;
-            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
-        }
+        .admin-tab { display: none; }
+        .admin-tab.active { display: block; }
+        .sidebar-active { background: #eff6ff; color: #2563eb; border-right: 4px solid #2563eb; }
+        .upload-loading { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen">
+<body class="bg-[#f8fafc] text-slate-900">
 
-    <!-- Auth Screen -->
-    <div id="auth-screen" class="fixed inset-0 z-50 bg-slate-100 flex items-center justify-center p-4">
-        <div class="max-w-md w-full bg-white rounded-3xl shadow-2xl p-8 border border-slate-200">
-            
-            <!-- Step 1: Login -->
-            <div id="step-login">
-                <div class="flex flex-col items-center mb-8">
-                    <div class="w-16 h-16 bg-emerald-600 rounded-2xl flex items-center justify-center mb-4">
-                        <i data-lucide="lock" class="text-white w-8 h-8"></i>
-                    </div>
-                    <h1 class="text-2xl font-bold text-center">Admin Login</h1>
-                    <p class="text-slate-500 text-sm">Enter your school credentials</p>
+    <!-- Auth Guard Overlay -->
+    <div id="auth-overlay" class="fixed inset-0 z-[100] bg-slate-900 flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-md w-full">
+            <div class="text-center mb-8">
+                <div class="bg-blue-600 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-200">
+                    <i data-lucide="lock" class="text-white w-8 h-8"></i>
                 </div>
-
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Email</label>
-                        <input type="email" id="email" placeholder="admin@school.com" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Password</label>
-                        <input type="password" id="pass-field" placeholder="••••••••" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500">
-                    </div>
-                    <div id="auth-msg" class="text-sm text-red-500 font-medium min-h-[20px]"></div>
-                    
-                    <button onclick="requestOTP()" id="login-btn" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-black transition-all">
-                        Request 6-Digit Code
-                    </button>
-                </div>
+                <h2 class="text-2xl font-bold">Admin Portal</h2>
+                <p class="text-slate-500">Please sign in to manage library content</p>
             </div>
-
-            <!-- Step 2: 6-Digit OTP -->
-            <div id="step-otp" class="hidden">
-                <div class="flex flex-col items-center mb-8">
-                    <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mb-4">
-                        <i data-lucide="shield-check" class="text-white w-8 h-8"></i>
-                    </div>
-                    <h1 class="text-2xl font-bold">Verification</h1>
-                    <p class="text-slate-500 text-sm text-center">Enter the 6-digit code sent to your email</p>
-                </div>
-
-                <div class="space-y-6">
-                    <div class="otp-container" id="otp-inputs">
-                        <input type="text" maxlength="1" class="otp-digit" oninput="moveFocus(this, 0)" onkeydown="handleDelete(event, 0)">
-                        <input type="text" maxlength="1" class="otp-digit" oninput="moveFocus(this, 1)" onkeydown="handleDelete(event, 1)">
-                        <input type="text" maxlength="1" class="otp-digit" oninput="moveFocus(this, 2)" onkeydown="handleDelete(event, 2)">
-                        <input type="text" maxlength="1" class="otp-digit" oninput="moveFocus(this, 3)" onkeydown="handleDelete(event, 3)">
-                        <input type="text" maxlength="1" class="otp-digit" oninput="moveFocus(this, 4)" onkeydown="handleDelete(event, 4)">
-                        <input type="text" maxlength="1" class="otp-digit" oninput="moveFocus(this, 5)" onkeydown="handleDelete(event, 5)">
-                    </div>
-
-                    <div id="otp-msg" class="text-sm text-red-500 font-medium min-h-[20px] text-center"></div>
-                    
-                    <button onclick="verifyOTP()" id="verify-btn" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 transition-all">
-                        Verify & Access
-                    </button>
-
-                    <button onclick="showLogin()" class="w-full text-slate-400 text-sm hover:text-slate-600 py-2">
-                        ← Re-enter credentials
-                    </button>
-                </div>
+            <div class="space-y-4">
+                <input type="email" id="login-email" placeholder="Email Address" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none">
+                <input type="password" id="login-pass" placeholder="Password" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none">
+                <button onclick="handleLogin()" id="login-btn" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-all">Sign In</button>
             </div>
         </div>
     </div>
 
-    <!-- App Dashboard (Hidden by default) -->
-    <div id="main-app" class="hidden">
-        <nav class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-40">
-            <div class="flex items-center gap-2">
-                <div class="w-8 h-8 bg-emerald-600 rounded flex items-center justify-center">
-                    <i data-lucide="book-open" class="text-white w-4 h-4"></i>
-                </div>
-                <span class="font-bold">Library Admin</span>
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white border-r hidden lg:flex flex-col sticky top-0 h-screen">
+            <div class="p-6 border-b">
+                <h1 class="font-bold text-xl">Library Admin</h1>
+                <p class="text-xs text-slate-400 font-medium">Gyanshree School</p>
             </div>
-            <button onclick="signOut()" class="text-slate-400 hover:text-red-500 transition-all">
-                <i data-lucide="log-out" class="w-5 h-5"></i>
-            </button>
-        </nav>
-
-        <main class="max-w-4xl mx-auto p-6">
-            <div class="grid md:grid-cols-3 gap-6">
-                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm h-fit">
-                    <h2 class="font-bold mb-4">Add Book</h2>
-                    <div class="space-y-3">
-                        <input type="text" id="book-title" placeholder="Title" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-emerald-500">
-                        <input type="text" id="book-author" placeholder="Author" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-emerald-500">
-                        <button onclick="addBook()" class="w-full bg-emerald-600 text-white py-2 rounded-lg font-bold">Save Book</button>
-                    </div>
-                </div>
-
-                <div class="md:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div class="p-4 border-b border-slate-100 flex justify-between items-center">
-                        <h2 class="font-bold">Inventory</h2>
-                        <i data-lucide="refresh-cw" class="w-4 h-4 text-slate-300 cursor-pointer" onclick="fetchBooks()"></i>
-                    </div>
-                    <div id="books-container" class="divide-y divide-slate-100">
-                        <!-- Content loaded via JS -->
-                    </div>
-                </div>
+            <nav class="flex-1 py-4">
+                <button onclick="switchTab('books')" id="tab-btn-books" class="sidebar-active w-full flex items-center gap-3 px-6 py-4 font-semibold text-slate-600 transition-all">
+                    <i data-lucide="book-open" class="w-5 h-5"></i> Manage Books
+                </button>
+                <button onclick="switchTab('events')" id="tab-btn-events" class="w-full flex items-center gap-3 px-6 py-4 font-semibold text-slate-600 transition-all hover:bg-slate-50">
+                    <i data-lucide="calendar" class="w-5 h-5"></i> Library Events
+                </button>
+                <button onclick="switchTab('reader')" id="tab-btn-reader" class="w-full flex items-center gap-3 px-6 py-4 font-semibold text-slate-600 transition-all hover:bg-slate-50">
+                    <i data-lucide="award" class="w-5 h-5"></i> Reader of the Month
+                </button>
+            </nav>
+            <div class="p-4 border-t">
+                <button onclick="handleLogout()" class="w-full flex items-center gap-3 px-4 py-2 text-red-500 font-medium hover:bg-red-50 rounded-lg">
+                    <i data-lucide="log-out" class="w-4 h-4"></i> Sign Out
+                </button>
             </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-8 lg:p-12">
+            
+            <!-- Manage Books Tab -->
+            <section id="tab-books" class="admin-tab active">
+                <div class="flex justify-between items-center mb-8">
+                    <h2 class="text-3xl font-bold tracking-tight">Manage New Arrivals</h2>
+                    <button onclick="openModal('book')" class="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-blue-700">
+                        <i data-lucide="plus" class="w-5 h-5"></i> Add New Book
+                    </button>
+                </div>
+                <div id="books-list" class="grid gap-4">
+                    <!-- Dynamic Book List -->
+                </div>
+            </section>
+
+            <!-- Library Events Tab -->
+            <section id="tab-events" class="admin-tab">
+                <div class="flex justify-between items-center mb-8">
+                    <h2 class="text-3xl font-bold tracking-tight">Manage Events</h2>
+                    <button onclick="openModal('event')" class="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-blue-700">
+                        <i data-lucide="plus" class="w-5 h-5"></i> Add New Event
+                    </button>
+                </div>
+                <div id="events-list" class="grid gap-4">
+                    <!-- Dynamic Event List -->
+                </div>
+            </section>
+
+            <!-- Reader Tab -->
+            <section id="tab-reader" class="admin-tab">
+                <h2 class="text-3xl font-bold tracking-tight mb-8">Update Reader of the Month</h2>
+                <div class="max-w-xl bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-bold mb-2">Student Name</label>
+                            <input type="text" id="rotm-name" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-bold mb-2">Grade/Section</label>
+                                <input type="text" id="rotm-class" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold mb-2">Month & Year</label>
+                                <input type="text" id="rotm-period" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold mb-2">Student Photo</label>
+                            <div class="flex gap-4 items-center">
+                                <div id="rotm-preview" class="w-20 h-20 rounded-xl bg-slate-100 border border-dashed border-slate-300 flex items-center justify-center overflow-hidden">
+                                    <i data-lucide="image" class="text-slate-300"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <input type="file" id="rotm-file" accept="image/*" class="hidden" onchange="uploadImage(event, 'rotm-url', 'rotm-preview')">
+                                    <button onclick="document.getElementById('rotm-file').click()" class="bg-slate-100 text-slate-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-200">
+                                        Choose New Photo
+                                    </button>
+                                    <input type="hidden" id="rotm-url">
+                                </div>
+                            </div>
+                        </div>
+                        <button onclick="updateReader()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-all">Update Spotlight</button>
+                    </div>
+                </div>
+            </section>
+
         </main>
     </div>
 
+    <!-- Generic Modal for Add/Edit -->
+    <div id="form-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-[200] backdrop-blur-sm">
+        <div class="bg-white w-full max-w-lg rounded-3xl p-8 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div class="flex justify-between items-center mb-6">
+                <h3 id="modal-title" class="text-xl font-bold">Add Entry</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-900"><i data-lucide="x"></i></button>
+            </div>
+            <form id="entry-form" class="space-y-4">
+                <input type="hidden" id="entry-type">
+                <div id="form-fields" class="space-y-4">
+                    <!-- Fields injected based on type -->
+                </div>
+                <button type="submit" id="save-btn" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-all mt-4">Save Entry</button>
+            </form>
+        </div>
+    </div>
+
     <script>
-        const SUPABASE_URL = "https://oizvyuciltowiospwaob.supabase.co";
-        const SUPABASE_KEY = "sb_publishable_QeoS6bMi2XcGSEstKng22w_PjySmNUx";
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const SUPABASE_URL = 'https://oizvyuciltowiospwaob.supabase.co'; 
+        const SUPABASE_ANON_KEY = 'sb_publishable_QeoS6bMi2XcGSEstKng22w_PjySmNUx';
+        
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // --- OTP UI Logic ---
-        function moveFocus(el, index) {
-            if (el.value.length === 1 && index < 5) {
-                document.querySelectorAll('.otp-digit')[index + 1].focus();
-            }
-        }
+        let currentUser = null;
 
-        function handleDelete(e, index) {
-            if (e.key === "Backspace" && !e.target.value && index > 0) {
-                document.querySelectorAll('.otp-digit')[index - 1].focus();
-            }
-        }
-
-        function getFullOTP() {
-            let code = "";
-            document.querySelectorAll('.otp-digit').forEach(input => code += input.value);
-            return code;
-        }
-
-        // --- Auth Logic ---
-        async function requestOTP() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('pass-field').value;
-            const msg = document.getElementById('auth-msg');
+        async function handleLogin() {
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-pass').value;
             const btn = document.getElementById('login-btn');
-
-            if (!email || !password) {
-                msg.innerText = "Provide email and password.";
-                return;
-            }
-
-            btn.disabled = true;
-            msg.innerText = "Verifying...";
-
-            // 1. Verify password first
-            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-
-            if (error) {
-                msg.innerText = "Error: " + error.message;
-                btn.disabled = false;
-            } else {
-                // 2. Request the 6-digit OTP
-                const { error: otpErr } = await supabaseClient.auth.signInWithOtp({ 
-                    email: email,
-                    options: { shouldCreateUser: false }
-                });
-
-                if (otpErr) {
-                    msg.innerText = "OTP Error: " + otpErr.message;
-                    btn.disabled = false;
-                } else {
-                    document.getElementById('step-login').classList.add('hidden');
-                    document.getElementById('step-otp').classList.remove('hidden');
-                    document.querySelectorAll('.otp-digit')[0].focus();
-                }
-            }
-        }
-
-        async function verifyOTP() {
-            const email = document.getElementById('email').value;
-            const token = getFullOTP();
-            const msg = document.getElementById('otp-msg');
             
-            if (token.length < 6) {
-                msg.innerText = "Enter all 6 digits.";
-                return;
-            }
-
-            const { data, error } = await supabaseClient.auth.verifyOtp({
-                email: email,
-                token: token,
-                type: 'email'
-            });
+            btn.innerText = 'Verifying...';
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
 
             if (error) {
-                msg.innerText = "Invalid code. Try again.";
+                alert("Login Failed: " + error.message);
+                btn.innerText = 'Sign In';
             } else {
                 checkUser();
             }
         }
 
-        async function checkUser() {
-            const { data: { user } } = await supabaseClient.auth.getUser();
-            if (user) {
-                document.getElementById('auth-screen').classList.add('hidden');
-                document.getElementById('main-app').classList.remove('hidden');
-                fetchBooks();
-            }
-        }
-
-        function showLogin() {
-            document.getElementById('step-otp').classList.add('hidden');
-            document.getElementById('step-login').classList.remove('hidden');
-            document.getElementById('login-btn').disabled = false;
-        }
-
-        async function signOut() {
+        async function handleLogout() {
             await supabaseClient.auth.signOut();
             location.reload();
         }
 
-        // --- Data Logic ---
-        async function fetchBooks() {
-            const container = document.getElementById('books-container');
-            const { data, error } = await supabaseClient.from('books').select('*').order('created_at', { ascending: false });
-            
-            if (error) return;
-            
-            container.innerHTML = data.map(book => `
-                <div class="p-4 flex justify-between items-center">
-                    <div>
-                        <div class="font-bold text-sm">${book.title}</div>
-                        <div class="text-xs text-slate-400">${book.author}</div>
-                    </div>
-                    <button onclick="deleteBook(${book.id})" class="text-slate-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                </div>
-            `).join('');
-            lucide.createIcons();
-        }
-
-        async function addBook() {
-            const title = document.getElementById('book-title').value;
-            const author = document.getElementById('book-author').value;
-            if (!title || !author) return;
-
-            const { error } = await supabaseClient.from('books').insert([{ title, author }]);
-            if (!error) {
-                document.getElementById('book-title').value = '';
-                document.getElementById('book-author').value = '';
-                fetchBooks();
+        async function checkUser() {
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            if (user) {
+                currentUser = user;
+                document.getElementById('auth-overlay').classList.add('hidden');
+                refreshData();
             }
         }
 
-        async function deleteBook(id) {
-            await supabaseClient.from('books').delete().eq('id', id);
-            fetchBooks();
+        // Image Upload Logic
+        async function uploadImage(event, targetInputId, previewId) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const previewEl = document.getElementById(previewId);
+            const saveBtn = document.getElementById('save-btn');
+            if (previewEl) previewEl.classList.add('upload-loading');
+            if (saveBtn) saveBtn.disabled = true;
+
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Math.random()}.${fileExt}`;
+            const filePath = `${fileName}`;
+
+            const { data, error } = await supabaseClient.storage
+                .from('library-assets') // Make sure this bucket is public in Supabase
+                .upload(filePath, file);
+
+            if (error) {
+                alert("Upload failed: " + error.message);
+                if (previewEl) previewEl.classList.remove('upload-loading');
+                return;
+            }
+
+            const { data: { publicUrl } } = supabaseClient.storage
+                .from('library-assets')
+                .getPublicUrl(filePath);
+
+            document.getElementById(targetInputId).value = publicUrl;
+            
+            if (previewEl) {
+                previewEl.classList.remove('upload-loading');
+                previewEl.innerHTML = `<img src="${publicUrl}" class="w-full h-full object-cover">`;
+            }
+            if (saveBtn) saveBtn.disabled = false;
         }
 
-        checkUser();
-        lucide.createIcons();
+        function switchTab(tab) {
+            document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(`tab-${tab}`).classList.add('active');
+            
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('sidebar-active'));
+            document.getElementById(`tab-btn-${tab}`).classList.add('sidebar-active');
+            
+            lucide.createIcons();
+            refreshData();
+        }
+
+        async function refreshData() {
+            const currentTab = document.querySelector('.admin-tab.active').id;
+            
+            if (currentTab === 'tab-books') {
+                const { data } = await supabaseClient.from('books').select('*').order('created_at', {ascending: false});
+                const list = document.getElementById('books-list');
+                list.innerHTML = (data || []).map(b => `
+                    <div class="bg-white p-4 rounded-2xl flex items-center justify-between border border-slate-100 shadow-sm">
+                        <div class="flex items-center gap-4">
+                            <img src="${b.cover_url}" class="w-12 h-16 object-cover rounded-md shadow-sm bg-slate-100">
+                            <div>
+                                <h4 class="font-bold">${b.title}</h4>
+                                <p class="text-xs text-slate-500">${b.author}</p>
+                            </div>
+                        </div>
+                        <button onclick="deleteEntry('books', '${b.id}')" class="text-red-400 hover:text-red-600 p-2"><i data-lucide="trash-2"></i></button>
+                    </div>
+                `).join('');
+            }
+
+            if (currentTab === 'tab-events') {
+                const { data } = await supabaseClient.from('events').select('*').order('event_date', {ascending: true});
+                const list = document.getElementById('events-list');
+                list.innerHTML = (data || []).map(e => `
+                    <div class="bg-white p-4 rounded-2xl flex items-center justify-between border border-slate-100 shadow-sm">
+                        <div>
+                            <h4 class="font-bold">${e.title}</h4>
+                            <p class="text-xs text-blue-600 font-bold">${e.event_date}</p>
+                        </div>
+                        <button onclick="deleteEntry('events', '${e.id}')" class="text-red-400 hover:text-red-600 p-2"><i data-lucide="trash-2"></i></button>
+                    </div>
+                `).join('');
+            }
+
+            if (currentTab === 'tab-reader') {
+                const { data } = await supabaseClient.from('reader_of_the_month').select('*').eq('id', 'current').single();
+                if (data) {
+                    document.getElementById('rotm-name').value = data.name;
+                    document.getElementById('rotm-class').value = data.class_section;
+                    document.getElementById('rotm-period').value = data.month_year;
+                    document.getElementById('rotm-url').value = data.image_url;
+                    document.getElementById('rotm-preview').innerHTML = `<img src="${data.image_url}" class="w-full h-full object-cover">`;
+                }
+            }
+            lucide.createIcons();
+        }
+
+        async function deleteEntry(table, id) {
+            if(!confirm("Are you sure?")) return;
+            const { error } = await supabaseClient.from(table).delete().eq('id', id);
+            if(error) alert(error.message);
+            else refreshData();
+        }
+
+        async function updateReader() {
+            const updates = {
+                name: document.getElementById('rotm-name').value,
+                class_section: document.getElementById('rotm-class').value,
+                month_year: document.getElementById('rotm-period').value,
+                image_url: document.getElementById('rotm-url').value,
+            };
+            const { error } = await supabaseClient.from('reader_of_the_month').update(updates).eq('id', 'current');
+            if(error) alert(error.message);
+            else alert("Reader Spotlight Updated!");
+        }
+
+        function openModal(type) {
+            const modal = document.getElementById('form-modal');
+            const fields = document.getElementById('form-fields');
+            const title = document.getElementById('modal-title');
+            document.getElementById('entry-type').value = type;
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            if(type === 'book') {
+                title.innerText = "Add New Book";
+                fields.innerHTML = `
+                    <input type="text" name="title" placeholder="Book Title" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none" required>
+                    <input type="text" name="author" placeholder="Author Name" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none" required>
+                    <input type="text" name="genre" placeholder="Genre (e.g. Mystery)" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none">
+                    
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold text-slate-500 uppercase">Cover Image</label>
+                        <div class="flex gap-4 items-center">
+                            <div id="modal-preview" class="w-16 h-20 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center overflow-hidden">
+                                <i data-lucide="image" class="text-slate-300"></i>
+                            </div>
+                            <div class="flex-1">
+                                <input type="file" accept="image/*" class="w-full text-xs" onchange="uploadImage(event, 'modal-url', 'modal-preview')">
+                                <input type="hidden" name="cover_url" id="modal-url" required>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                title.innerText = "Add New Event";
+                fields.innerHTML = `
+                    <input type="text" name="title" placeholder="Event Title" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none" required>
+                    <input type="date" name="event_date" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none" required>
+                    <textarea name="description" placeholder="Short Event Description" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none h-24"></textarea>
+                    
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold text-slate-500 uppercase">Event Image</label>
+                        <div class="flex gap-4 items-center">
+                            <div id="modal-preview" class="w-20 h-14 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center overflow-hidden">
+                                <i data-lucide="image" class="text-slate-300"></i>
+                            </div>
+                            <div class="flex-1">
+                                <input type="file" accept="image/*" class="w-full text-xs" onchange="uploadImage(event, 'modal-url', 'modal-preview')">
+                                <input type="hidden" name="image_url" id="modal-url">
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            lucide.createIcons();
+        }
+
+        function closeModal() {
+            document.getElementById('form-modal').classList.add('hidden');
+            document.getElementById('form-modal').classList.remove('flex');
+        }
+
+        document.getElementById('entry-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const type = document.getElementById('entry-type').value;
+            const table = type === 'book' ? 'books' : 'events';
+            const data = Object.fromEntries(formData.entries());
+            
+            const { error } = await supabaseClient.from(table).insert([data]);
+            if(error) alert(error.message);
+            else {
+                closeModal();
+                refreshData();
+            }
+        };
+
+        window.onload = checkUser;
     </script>
 </body>
 </html>
