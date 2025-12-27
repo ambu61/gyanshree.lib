@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Senior Library (VI-XII) - Gyanshree School</title>
-    <!-- External Scripts: Tailwind for styling, Lucide for icons, and Supabase for data -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -66,7 +65,6 @@
     </header>
 
     <main class="flex-grow">
-        <!-- Hero Carousel -->
         <div id="slider" class="relative w-full h-[300px] sm:h-[400px] lg:h-[550px] overflow-hidden bg-gray-900">
             <div class="slide absolute inset-0 w-full h-full opacity-100">
                 <img src="unnamed.png" alt="Library Desk" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='https://placehold.co/800x400/38bdf8/ffffff?text=Desk';">
@@ -85,7 +83,6 @@
         <section class="py-12 sm:py-20 bg-white">
             <div class="container mx-auto px-4 text-center max-w-5xl">
                 <h2 class="text-4xl font-extrabold text-gray-800 mb-6">About the Senior Library</h2>
-                <p class="text-xl sm:text-2xl text-gray-600 leading-relaxed mb-8">A state-of-the-art resource center designed for academic and intellectual growth.</p>
                 
                 <div class="bg-blue-50 p-8 rounded-2xl border border-blue-100 shadow-sm">
                     <p class="text-lg text-gray-700 leading-relaxed text-justify md:text-center">
@@ -95,7 +92,6 @@
             </div>
         </section>
 
-        <!-- Features Grid -->
         <section class="bg-gray-200 py-12 sm:py-16">
             <div class="max-w-6xl mx-auto px-4">
                 <div id="resourceGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -132,15 +128,12 @@
         </section>
     </main>
 
-    <!-- READER OF THE MONTH POPUP MODAL -->
     <div id="reader-modal" class="fixed inset-0 z-[100] modal-overlay flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden relative transform transition-all scale-90 opacity-0 duration-500" id="modal-content">
-            <!-- Close Button -->
             <button onclick="closeReaderModal()" class="absolute top-4 right-4 text-white/80 hover:text-white transition z-10">
                 <i data-lucide="x-circle" class="w-8 h-8"></i>
             </button>
             
-            <!-- Card Header -->
             <div class="bg-gradient-to-br from-amber-400 to-orange-600 p-8 text-center text-white relative">
                 <div class="absolute top-0 right-0 p-4 opacity-20">
                     <i data-lucide="award" class="w-24 h-24 rotate-12"></i>
@@ -149,7 +142,6 @@
                 <h2 class="text-3xl font-bold leading-tight">Reader of <br>the Month</h2>
             </div>
             
-            <!-- Card Body -->
             <div class="p-8 text-center -mt-12">
                 <div class="relative inline-block mb-6">
                     <div class="w-32 h-32 mx-auto rounded-full border-4 border-white p-1 overflow-hidden shadow-xl bg-gray-50">
@@ -262,4 +254,3 @@
     </script>
 </body>
 </html>
-
